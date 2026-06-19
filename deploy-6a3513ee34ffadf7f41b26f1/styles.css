@@ -429,7 +429,7 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  font-size: 0.66rem;
+  font-size: 0.6rem;
   font-weight: 600;
   letter-spacing: 0.03em;
   text-transform: uppercase;
@@ -557,7 +557,7 @@ body {
   margin-top: 2px;
 }
 .slot-bonuses .bonus-tag {
-  font-size: 0.58rem;
+  font-size: 0.53rem;
   padding: 1px 6px;
 }
 
