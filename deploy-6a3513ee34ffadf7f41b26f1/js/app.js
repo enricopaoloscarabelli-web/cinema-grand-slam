@@ -35,6 +35,60 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3);
 const fmt = (n) => Math.round(n).toLocaleString("en-US");
 
+// ── REEL SOUND ENGINE ─────────────────────────────────────────────────────
+// Uses Web Audio API — no files, no dependencies. Creates a mechanical
+// clicking sound that speeds up at the start and slows to a stop, like a
+// real slot machine reel. Gracefully silenced if the browser blocks audio.
+let _audioCtx = null;
+function getAudioCtx() {
+  if (!_audioCtx) {
+    try { _audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch (_) {}
+  }
+  return _audioCtx;
+}
+
+function playClick(ctx, time, gain = 0.18) {
+  try {
+    const buf = ctx.createBuffer(1, ctx.sampleRate * 0.03, ctx.sampleRate);
+    const data = buf.getChannelData(0);
+    for (let i = 0; i < data.length; i++) {
+      // Short noise burst — mechanical click feel
+      data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / data.length, 6);
+    }
+    const src = ctx.createBufferSource();
+    src.buffer = buf;
+    const vol = ctx.createGain();
+    vol.gain.value = gain;
+    src.connect(vol);
+    vol.connect(ctx.destination);
+    src.start(time);
+  } catch (_) {}
+}
+
+function playReelSound(durationMs) {
+  const ctx = getAudioCtx();
+  if (!ctx) return;
+  // Resume context if suspended (browser autoplay policy)
+  if (ctx.state === "suspended") ctx.resume();
+
+  const now = ctx.currentTime;
+  const duration = durationMs / 1000;
+  // Schedule clicks: fast at start, slow at end — matches the CSS ease-out curve
+  // Interval goes from 55ms (fast spin) to 280ms (slow stop)
+  let t = 0;
+  let interval = 0.055; // seconds between clicks at start
+  const endInterval = 0.28;
+  while (t < duration) {
+    playClick(ctx, now + t, t < duration * 0.15 ? 0.12 : 0.2);
+    // Gradually increase interval (deceleration)
+    const progress = t / duration;
+    interval = 0.055 + (endInterval - 0.055) * Math.pow(progress, 1.8);
+    t += interval;
+  }
+  // Final heavier "clunk" as it lands
+  playClick(ctx, now + duration - 0.04, 0.35);
+}
+
 // Quality tier for a 0–100 rating, used to colour every numeric rating in the
 // UI (gold > blue > green > orange > red). Returns a CSS class suffix; styling
 // lives in styles.css under .rt-* so the palette stays in one place.
@@ -472,6 +526,7 @@ async function drawTeam() {
   strip.style.transform = `translateY(-${offset}px)`;
 
   $("#reelWrap").classList.add("spinning");
+  playReelSound(2700);
   await sleep(2850);
   $("#reelWrap").classList.remove("spinning");
 
