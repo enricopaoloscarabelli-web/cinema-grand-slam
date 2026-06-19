@@ -818,7 +818,7 @@ roster("silentHollywood", "Hollywood Silent Era", "🎞️", [
 ]),
 
 roster("hungary70", "Hungary '70s", "🇭🇺", [
-  ["Drama Director",     "István Szabó",         84, "p"]],
+  ["Drama Director",     "István Szabó",         84, "p"],
   ["Comedy Director",    "Péter Bacsó",          84],
   ["Genre Director",     "Márta Mészáros",       84, "p"],
   ["STAR Director",      "Zoltán Fábri",         87, "u"],
@@ -858,7 +858,7 @@ roster("belgiumHallOfFame", "Belgium Hall of Fame", "🇧🇪", [
   ["Comedy Director",    "Sam Garbarski",        82],
   ["Genre Director",     "Fabrice Du Welz",      79],
   ["STAR Director",      "Agnes Varda",          88, "u"],
-  ["STAR Actor",         "Jean-Claude Van Damme",85, "s"],
+  ["STAR Actor",         "Jean-Claude Van Damme", 85, "s"],
   ["Comedy Actor",       "Benoît Poelvoorde",    80],
   ["Drama Actor",        "Matthias Schoenaerts", 84],
   ["Character Actor",    "Olivier Gourmet",      84],
