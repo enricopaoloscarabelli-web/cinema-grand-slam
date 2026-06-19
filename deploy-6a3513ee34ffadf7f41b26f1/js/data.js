@@ -401,7 +401,7 @@ export const ROSTERS = [
     ["Comedy Director", "Ernst Lubitsch", 87],
     ["Genre Director", "F.W. Murnau", 89, "a"],
     ["STAR Director", "Fritz Lang", 95, "u"],
-    ["STAR Actor", "Peter Lorre", 90, "s"],
+    ["STAR Actor", "Emil Jannings", 87],
     ["Comedy Actor", "Reinhold Schünzel", 85],
     ["Drama Actor", "Conrad Veidt", 86],
     ["Character Actor", "Werner Krauss", 83],
