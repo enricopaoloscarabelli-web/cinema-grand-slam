@@ -41,7 +41,7 @@ const fmt = (n) => Math.round(n).toLocaleString("en-US");
 //   91–100 gold · 85–90 blue · 75–84 green · 65–74 orange · 0–64 red
 function ratingTier(n) {
   const r = Math.round(n);
-  if (r >= 91) return "gold";
+  if (r >= 90) return "gold";
   if (r >= 85) return "blue";
   if (r >= 75) return "green";
   if (r >= 65) return "orange";
