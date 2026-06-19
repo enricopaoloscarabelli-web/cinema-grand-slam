@@ -78,7 +78,7 @@ export const FESTIVALS = [
     guidance: "The Palme jury worships DIRECTING & cinematography — and rewards the SOCIAL-ENGAGEMENT bonus.",
     reward: "Directing & cinematography",
     // Bonus weight reduced: social 3→2. Craft scores (directing, cine) more decisive.
-    weights: { social: 2, directing: 2.5, cinematography: 1.8, screenplay: 1, acting: 0.8 },
+    weights: { social: 2.5, directing: 2.5, cinematography: 1.8, screenplay: 1, acting: 0.8 },
   },
   {
     key: "venice",
@@ -186,7 +186,8 @@ function bonusStrength(team, type, divisor) {
 // Divisors for bonus strength: higher = harder to max out a bonus.
 // Previously avantgarde/hipster used 3 (too easy to stack), now raised to 5.
 // political/starsystem raised from 6 → 8; auteur/social from 4 → 6.
-export function components(team) {
+// Easy Mode restores the original low divisors for stronger bonuses.
+export function components(team, easyMode = false) {
   return {
     directing: avg(team, DIRECTOR_ROLES),
     acting: avg(team, ACTOR_ROLES),
@@ -195,18 +196,18 @@ export function components(team) {
     cinematography: team["Cinematographer"] ? team["Cinematographer"].rating : 0,
     music: team["Composer"] ? team["Composer"].rating : 0,
     drama: avg(team, DRAMA_ROLES),
-    political: bonusStrength(team, "political", 8),
-    avantgarde: bonusStrength(team, "avantgarde", 5),
-    hipster: bonusStrength(team, "hipster", 5),
-    starsystem: bonusStrength(team, "starsystem", 8),
-    auteur: bonusStrength(team, "auteur", 6),
-    social: bonusStrength(team, "social", 6),
+    political:   bonusStrength(team, "political",   easyMode ? 7 : 7),
+    avantgarde:  bonusStrength(team, "avantgarde",  easyMode ? 4 : 4),
+    hipster:     bonusStrength(team, "hipster",     easyMode ? 4 : 4),
+    starsystem:  bonusStrength(team, "starsystem",  easyMode ? 7 : 7),
+    auteur:      bonusStrength(team, "auteur",      easyMode ? 5 : 5),
+    social:      bonusStrength(team, "social",      easyMode ? 5 : 5),
   };
 }
 
 // Returns { total, acts: [a1, a2, a3] } — all on the displayed x10 scale.
-export function scoreBreakdown(team, festival) {
-  const comp = components(team);
+export function scoreBreakdown(team, festival, easyMode = false) {
+  const comp = components(team, easyMode);
   const w = festival.weights;
   const actSums = [0, 0, 0];
   let weightTotal = 0;
