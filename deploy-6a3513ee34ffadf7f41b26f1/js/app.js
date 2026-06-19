@@ -1445,7 +1445,7 @@ function renderGoatIntro() {
         <div class="goat-rival-desc">The greatest film crew ever assembled. No weaknesses. No mercy.</div>
         <div class="goat-rival-stats">
           <span>Avg rating: <b>93.5</b></span>
-          <span>Bonuses: all six</span>
+          <span>Masterful craft across the board</span>
         </div>
       </div>
       <div class="goat-format">
@@ -1483,8 +1483,14 @@ async function runGoatRound(round, playerWins, goatWins) {
   const gb = scoreBreakdown(GOAT_TEAM, fest);
 
   // Player gets a small random form boost; GOAT is always at peak.
-  const playerForm = rand(0.97, 1.06);
-  const goatForm = rand(1.0, 1.12);
+  // GOAT form lowered to 0.95-1.05 as requested
+  const playerAvg = teamAverage(game.crew);
+  let playerForm = rand(0.97, 1.06);
+  if (playerAvg >= 90) {
+    // Elite crew (90+ avg) gets meaningful advantage vs GOAT
+    playerForm = rand(1.02, 1.12);
+  }
+  const goatForm = rand(0.95, 1.05);
 
   const teams = [
     {
@@ -1619,6 +1625,7 @@ async function runGoatRound(round, playerWins, goatWins) {
       const playerScore = teams.find((t) => t.isPlayer).score;
       const goatScore = teams.find((t) => !t.isPlayer).score;
       const playerWon = playerScore > goatScore;
+      const playerAvg = teamAverage(game.crew);
 
       root().innerHTML = "";
       const resultView = el(`
@@ -1645,6 +1652,18 @@ async function runGoatRound(round, playerWins, goatWins) {
               <span class="fb-score">${fmt(goatScore)}</span>
             </li>
           </ol>
+
+          <div class="crew-comparison">
+            <h4>Crew Comparison</h4>
+            <div class="comparison-row">
+              <span>Your Crew avg</span>
+              <span class="rt-${ratingTier(playerAvg)}"><b>${playerAvg.toFixed(1)}</b></span>
+            </div>
+            <div class="comparison-row">
+              <span>Cinema GOAT avg</span>
+              <span><b>93.5</b></span>
+            </div>
+          </div>
           <button class="btn btn-goat btn-xl" id="continueGoat">
             ${(playerWon ? playerWins + 1 : playerWins) === 2 || (!playerWon ? goatWins + 1 : goatWins) === 2
               ? "See final result →"
@@ -1759,21 +1778,3 @@ function wireShareButtons(view, tallyRows, grandSlam) {
         window.prompt("Copy your career card:", payload);
       }
     });
-}
-
-// ── toast ───────────────────────────────────────────────────────────────────
-let toastTimer = null;
-function flashToast(msg) {
-  let t = $("#toast");
-  if (!t) {
-    t = el(`<div id="toast" class="toast"></div>`);
-    document.body.appendChild(t);
-  }
-  t.textContent = msg;
-  t.classList.add("show");
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => t.classList.remove("show"), 1800);
-}
-
-// ── boot ──────────────────────────────────────────────────────────────────
-renderIntro();
