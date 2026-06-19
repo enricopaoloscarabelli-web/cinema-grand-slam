@@ -141,6 +141,7 @@ const game = {
   festivalRep: Object.fromEntries(FESTIVALS.map((f) => [f.key, 0])),
   usedDecisions: new Set(), // decision ids already shown this run (no repeats)
   isExpertMode: false, // Expert Mode: hide ratings/bonuses during the draft only
+  isEasyMode: false,   // Easy Mode: unlimited redraws + original bonus values
 };
 
 // Expert Mode hides every card rating and bonus while the player is still
@@ -321,15 +322,20 @@ function renderIntro() {
       </p>
       <button class="btn btn-primary btn-xl" id="begin">🎬 Begin Career</button>
       <div class="mode-select" id="modeSelect" role="group" aria-label="Game mode">
+        <button class="mode-btn" data-mode="easy">
+          <span class="mode-name">🍿 Cinema for dummies (Nolan fan)</span>
+          <span class="mode-desc">Unlimited redraws. Stronger bonuses. For beginners.</span>
+        </button>
         <button class="mode-btn" data-mode="normal">
-          <span class="mode-name">🎟️ Normal Mode</span>
-          <span class="mode-desc">Ratings &amp; bonuses always visible.</span>
+          <span class="mode-name">🎟️ Cinema expert (Kiarostami fan)</span>
+          <span class="mode-desc">Ratings &amp; bonuses always visible. One redraw.</span>
         </button>
         <button class="mode-btn" data-mode="expert">
-          <span class="mode-name">🕶️ Expert Mode</span>
+          <span class="mode-name">🕶️ Cinema master (The Emperor's New Groove fan)</span>
           <span class="mode-desc">Ratings &amp; bonuses hidden until your crew is complete.</span>
         </button>
       </div>
+      <p class="nolan-note"><i>Hey, Nolan fans, don't take it personally, we're just joking. Or maybe not? Who knows.</i></p>
       <div class="intro-fests">
         ${FESTIVALS.map((f) => `<span class="chip" style="--accent:${f.accent}">${f.icon} ${f.name}</span>`).join("")}
       </div>
@@ -341,12 +347,17 @@ function renderIntro() {
   const modeSelect = view.querySelector("#modeSelect");
   const syncMode = () => {
     modeSelect.querySelectorAll(".mode-btn").forEach((btn) => {
-      const isExpert = btn.dataset.mode === "expert";
-      btn.classList.toggle("active", isExpert === game.isExpertMode);
+      const m = btn.dataset.mode;
+      const active =
+        (m === "easy" && game.isEasyMode) ||
+        (m === "expert" && game.isExpertMode) ||
+        (m === "normal" && !game.isEasyMode && !game.isExpertMode);
+      btn.classList.toggle("active", active);
     });
   };
   modeSelect.querySelectorAll(".mode-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
+      game.isEasyMode   = btn.dataset.mode === "easy";
       game.isExpertMode = btn.dataset.mode === "expert";
       syncMode();
     });
@@ -360,7 +371,7 @@ function renderIntro() {
 // ───────────────────────────────────────────────────────────────────────────
 function startDraftTurn() {
   game.mode = "draft";
-  game.redrawsLeft = 1; // one discretionary redraw for the whole initial draft
+  game.redrawsLeft = game.isEasyMode ? Infinity : 1; // Easy = unlimited redraws
   game.started = true;
   renderRoadmap();
   renderDraft();
@@ -406,7 +417,9 @@ function renderDraft() {
 
       ${
         ratingsHidden()
-          ? `<p class="expert-banner">🕶️ <b>Expert Mode</b> — ratings &amp; bonuses are hidden while you draft. Trust your instincts; everything is revealed once your crew is complete.</p>`
+          ? `<p class="expert-banner">🕶️ <b>Cinema master</b> — ratings &amp; bonuses are hidden while you draft. Trust your instincts; everything is revealed once your crew is complete.</p>`
+          : game.isEasyMode
+          ? `<p class="easy-banner">🍿 <b>Cinema for dummies</b> — unlimited redraws and stronger bonuses. Take your time building the perfect crew.</p>`
           : ""
       }
 
@@ -611,11 +624,11 @@ function renderRosterPane(roster) {
             ? `<span class="muted small">Pick one member to swap into your crew, or:</span>
                <button class="btn btn-ghost" id="skipDraw">Discard this draw ▸</button>`
             : redrawFree
-            ? `<span class="redraw-status">Redraw Available: ${game.redrawsLeft}/1</span>
+            ? `<span class="redraw-status">Redraw Available: ${game.isEasyMode ? "∞" : `${game.redrawsLeft}/1`}</span>
                <button class="btn btn-ghost" id="redrawBtn">↻ No open role — draw again (free)</button>`
             : game.redrawsLeft > 0
-            ? `<span class="redraw-status">Redraw Available: 1/1</span>
-               <button class="btn btn-ghost" id="redrawBtn">↻ Use your redraw</button>`
+            ? `<span class="redraw-status">${game.isEasyMode ? "Redraw Available: ∞" : "Redraw Available: 1/1"}</span>
+               <button class="btn btn-ghost" id="redrawBtn">↻ ${game.isEasyMode ? "Draw again" : "Use your redraw"}</button>`
             : `<span class="redraw-status used">↻ Redraw Used</span>
                <span class="muted small">Make a pick.</span>`
         }
@@ -909,7 +922,7 @@ function renderFestivalIntro() {
 
 function buildFestivalTeams(fest) {
   const teams = [];
-  const playerBreak = scoreBreakdown(game.crew, fest);
+  const playerBreak = scoreBreakdown(game.crew, fest, game.isEasyMode);
   // Fold THIS festival's accumulated reputation into the player's act targets,
   // split evenly across the three acts so good (or bad) decisions visibly pay
   // off exactly where they were earned.
@@ -929,7 +942,7 @@ function buildFestivalTeams(fest) {
   for (const r of game.festRivals) {
     const team = rosterToTeam(r);
     const b = scoreBreakdown(team, fest);
-    const form = rand(0.96, 1.15); // AI rivals run hotter — harder to beat
+    const form = game.isEasyMode ? rand(0.82, 0.97) : rand(0.96, 1.15); // Easy: weaker AI
     teams.push({
       id: r.id,
       name: r.name,
