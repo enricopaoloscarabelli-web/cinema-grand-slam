@@ -1219,8 +1219,8 @@ function renderSeasonEnd() {
         isFinalSeason
           ? `<button class="btn btn-primary btn-xl" id="toFinal">See Grand Slam verdict ▸</button>`
           : `<div class="transfer-pitch">
-               <p>🎟️ You receive <b>2 transfer draws</b> for Season ${game.season + 1}.
-               Use them to replace up to two crew members — or keep your crew as is.</p>
+               <p>🎟️ You receive <b>3 transfer draws</b> for Season ${game.season + 1}.
+                Use them to replace up to three crew members — or keep your crew as is.</p>
                <div class="season-actions">
                  <button class="btn btn-primary btn-lg" id="openTransfer">Open transfer window</button>
                  <button class="btn btn-ghost btn-lg" id="skipTransfer">Keep crew &amp; continue ▸</button>
@@ -1235,7 +1235,7 @@ function renderSeasonEnd() {
   } else {
     view.querySelector("#openTransfer").addEventListener("click", () => {
       game.season += 1;
-      game.transfersLeft = 2;
+      game.transfersLeft = 3;
       game.currentRoster = null;
       game.mode = "transfer";
       renderDraft();
