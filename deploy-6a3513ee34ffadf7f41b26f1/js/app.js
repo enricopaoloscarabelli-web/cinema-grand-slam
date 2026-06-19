@@ -942,7 +942,7 @@ function buildFestivalTeams(fest) {
   for (const r of game.festRivals) {
     const team = rosterToTeam(r);
     const b = scoreBreakdown(team, fest);
-    const form = game.isEasyMode ? rand(0.82, 0.97) : rand(0.96, 1.15); // Easy: weaker AI
+    const form = game.isEasyMode ? rand(0.92, 1.08) : rand(0.96, 1.15); // Easy: leggermente più morbido ma non facile
     teams.push({
       id: r.id,
       name: r.name,
