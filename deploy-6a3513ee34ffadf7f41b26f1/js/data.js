@@ -888,3 +888,24 @@ roster("surrealistCinema", "Surrealist Cinema", "🎩", [
   // Comedy Actress, Composer — intentional gaps drive the redraw mechanic
 ]),
 ];
+
+// ── GOAT ROSTER — never enters the draft pool, only used as the final boss ──
+// Defined as a plain team map (role -> member) so it plugs directly into
+// scoreBreakdown() without going through the roster() helper.
+export const GOAT_TEAM = {
+  "Drama Director":    { name: "Carl Theodor Dreyer",  rating: 94, bonuses: ["auteur"] },
+  "Comedy Director":   { name: "Billy Wilder",          rating: 96, bonuses: ["auteur"] },
+  "Genre Director":    { name: "Stanley Kubrick",       rating: 96, bonuses: ["hipster"] },
+  "STAR Director":     { name: "Federico Fellini",      rating: 98, bonuses: ["avantgarde"] },
+  "STAR Actor":        { name: "Toshirō Mifune",        rating: 95, bonuses: [] },
+  "Comedy Actor":      { name: "Peter Sellers",         rating: 90, bonuses: ["starsystem"] },
+  "Drama Actor":       { name: "Tony Leung",            rating: 93, bonuses: ["starsystem"] },
+  "Character Actor":   { name: "John Cazale",           rating: 88, bonuses: [] },
+  "Comedy Actress":    { name: "Bibi Andersson",        rating: 93, bonuses: [] },
+  "Drama Actress":     { name: "Liv Ullmann",           rating: 96, bonuses: ["social"] },
+  "STAR Actress":      { name: "Sophia Loren",          rating: 96, bonuses: ["starsystem"] },
+  "Character Actress": { name: "Rossy de Palma",        rating: 85, bonuses: ["hipster"] },
+  "Cinematographer":   { name: "Sven Nykvist",          rating: 97, bonuses: [] },
+  "Composer":          { name: "John Williams",         rating: 98, bonuses: [] },
+  "Screenwriter":      { name: "Woody Allen",           rating: 90, bonuses: [] },
+};
