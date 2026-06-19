@@ -92,7 +92,7 @@ export const ROSTERS = [
   ]),
   roster("italy50", "Italy '50s — Neorealismo", "🇮🇹", [
     ["Drama Director", "Roberto Rossellini", 89, "p"],
-    ["Comedy Director", "Steno", 81],
+    ["Comedy Director", "Steno", 82],
     ["Genre Director", "Pietro Germi", 84, "e"],
     ["STAR Director", "Vittorio De Sica", 97, "e"],
     ["STAR Actor", "Totò", 90],
@@ -102,10 +102,10 @@ export const ROSTERS = [
     ["Comedy Actress", "Gina Lollobrigida", 87, "s"],
     ["Drama Actress", "Silvana Mangano", 87],
     ["STAR Actress", "Anna Magnani", 92],
-    ["Character Actress", "Tina Pica", 78],
-    ["Cinematographer", "Aldo Graziati", 79],
+    ["Character Actress", "Tina Pica", 80],
+    ["Cinematographer", "Aldo Graziati", 82],
     ["Composer", "Alessandro Cicognini", 81],
-    ["Screenwriter", "Cesare Zavattini", 87, "u"],
+    ["Screenwriter", "Cesare Zavattini", 88, "u"],
   ]),
   roster("italy70", "Italy '70s", "🇮🇹", [
     ["Drama Director", "Bernardo Bertolucci", 87, "u"],
