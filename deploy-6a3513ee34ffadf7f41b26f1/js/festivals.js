@@ -137,7 +137,33 @@ export const FESTIVALS = [
   },
 ];
 
-// ── helpers ────────────────────────────────────────────────────────────────
+// ── GOAT AWARDS — the final boss festival ────────────────────────────────
+// Weights every component equally: no single bonus or craft dominates.
+// This is the hardest possible jury to please.
+export const GOAT_FESTIVAL = {
+  key: "goat",
+  name: "GOAT Awards",
+  city: "Cinema History",
+  icon: "🐐",
+  accent: "#c0a060",
+  guidance: "The GOAT jury rewards everything equally. There are no shortcuts.",
+  reward: "All components · all bonuses",
+  weights: {
+    directing: 1.5,
+    acting: 1.5,
+    screenplay: 1.5,
+    cinematography: 1.5,
+    music: 1.5,
+    star: 1,
+    drama: 1,
+    political: 1,
+    avantgarde: 1,
+    hipster: 1,
+    starsystem: 1,
+    auteur: 1,
+    social: 1,
+  },
+};
 
 function avg(team, roles) {
   const vals = roles.map((r) => (team[r] ? team[r].rating : 0));
