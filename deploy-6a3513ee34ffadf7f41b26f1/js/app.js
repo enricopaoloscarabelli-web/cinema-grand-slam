@@ -1433,24 +1433,52 @@ function renderGameOver() {
 
 function renderGoatIntro() {
   root().innerHTML = "";
+
+  // Build roster comparison rows
+  const goatMembers = Object.entries(GOAT_TEAM);
+  const playerAvg = Math.round(teamAverage(game.crew));
+  const goatAvg = Math.round(goatMembers.reduce((s, [, m]) => s + m.rating, 0) / goatMembers.length);
+
+  const comparisonRows = ROLES.map((role) => {
+    const pm = game.crew[role];
+    const gm = GOAT_TEAM[role];
+    const pRating = pm ? pm.rating : 0;
+    const gRating = gm ? gm.rating : 0;
+    const playerWins = pRating >= gRating;
+    return `
+      <tr class="roster-cmp-row">
+        <td class="cmp-role">${role}</td>
+        <td class="cmp-player ${playerWins ? "cmp-winner" : ""}">
+          ${pm ? `<span class="cmp-name">${pm.name}</span><span class="cmp-rating">${pm.rating}</span>` : `<span class="cmp-missing">—</span>`}
+        </td>
+        <td class="cmp-vs">vs</td>
+        <td class="cmp-goat ${!playerWins ? "cmp-winner" : ""}">
+          ${gm ? `<span class="cmp-rating">${gm.rating}</span><span class="cmp-name">${gm.name}</span>` : `<span class="cmp-missing">—</span>`}
+        </td>
+      </tr>`;
+  }).join("");
+
   const view = el(`
     <section class="screen goat-intro">
       <div class="intro-glow"></div>
       <p class="kicker">Bonus Challenge</p>
       <h1 class="goat-title">🐐 THE GOAT CHALLENGE</h1>
       <p class="goat-sub">You conquered every festival. But one final opponent stands between you and immortality.</p>
-      <div class="goat-rival-card">
-        <div class="goat-rival-label">Your opponent</div>
-        <div class="goat-rival-name">🎬 Cinema GOAT</div>
-        <div class="goat-rival-desc">The greatest film crew ever assembled. No weaknesses. No mercy.</div>
-        <div class="goat-rival-stats">
-          <span>Avg rating: <b>93.5</b></span>
-          <span>Masterful craft across the board</span>
+
+      <div class="roster-comparison">
+        <div class="cmp-header">
+          <div class="cmp-header-player">🎬 Your Crew <span class="cmp-avg ${playerAvg >= 90 ? "cmp-avg-good" : ""}">avg ${playerAvg}</span></div>
+          <div class="cmp-header-goat">🐐 Cinema GOAT <span class="cmp-avg">avg ${goatAvg}</span></div>
         </div>
+        <table class="cmp-table">
+          <tbody>${comparisonRows}</tbody>
+        </table>
       </div>
+
       <div class="goat-format">
         <h3>Format: Best of 3</h3>
-        <p>Three rounds at the GOAT Awards. Win 2 to claim the title of Greatest Producer in Cinema History.</p>
+        <p>Three rounds at the GOAT Awards — the jury rewards every craft equally. Win 2 rounds to claim the title of Greatest Producer in Cinema History.</p>
+        ${playerAvg >= 90 ? `<p class="cmp-hint good">✅ Your crew average is ${playerAvg} — you have what it takes.</p>` : `<p class="cmp-hint warn">⚠️ Your crew average is ${playerAvg} — aim for 90+ to have a real chance.</p>`}
       </div>
       <button class="btn btn-goat btn-xl" id="startGoat">⚔️ Begin the Challenge</button>
       <button class="btn btn-ghost" id="skipGoat">← Back to career summary</button>
