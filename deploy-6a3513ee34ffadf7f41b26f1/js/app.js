@@ -35,7 +35,124 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3);
 const fmt = (n) => Math.round(n).toLocaleString("en-US");
 
-// ── REEL SOUND ENGINE ─────────────────────────────────────────────────────
+// ── CONFETTI & FIREWORKS ──────────────────────────────────────────────────
+// Pure CSS + JS canvas-free confetti. Uses absolutely-positioned divs that
+// animate with CSS keyframes injected once, then fall and fade out.
+// `intensity`: "festival" (win) | "slam" (grand slam) | "goat" (goat win)
+
+let _confettiStyleInjected = false;
+
+function injectConfettiStyles() {
+  if (_confettiStyleInjected) return;
+  _confettiStyleInjected = true;
+  const s = document.createElement("style");
+  s.textContent = `
+    .confetti-piece {
+      position: fixed;
+      top: -12px;
+      width: 10px;
+      height: 14px;
+      border-radius: 2px;
+      opacity: 0;
+      pointer-events: none;
+      z-index: 99998;
+      animation: confettiFall linear forwards;
+    }
+    @keyframes confettiFall {
+      0%   { opacity: 1; transform: translateY(0) rotate(0deg) scaleX(1); }
+      80%  { opacity: 1; }
+      100% { opacity: 0; transform: translateY(105vh) rotate(720deg) scaleX(-1); }
+    }
+    .firework {
+      position: fixed;
+      pointer-events: none;
+      z-index: 99998;
+    }
+    .firework-spark {
+      position: absolute;
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      animation: sparkFly ease-out forwards;
+    }
+    @keyframes sparkFly {
+      0%   { transform: translate(0,0) scale(1); opacity: 1; }
+      100% { transform: translate(var(--tx), var(--ty)) scale(0); opacity: 0; }
+    }
+  `;
+  document.head.appendChild(s);
+}
+
+function launchConfetti(intensity = "festival") {
+  injectConfettiStyles();
+  const counts = { festival: 80, slam: 180, goat: 140 };
+  const durations = { festival: [1800, 3200], slam: [2000, 4000], goat: [1900, 3500] };
+  const palettes = {
+    festival: ["#e7c66b", "#f0d27a", "#fff", "#6fcf97", "#8bb7df", "#b48ce0"],
+    slam:     ["#e7c66b", "#f0d27a", "#fff", "#ffd700", "#ff9d00", "#ffe066"],
+    goat:     ["#b48ce0", "#d9b6ff", "#fff", "#e7c66b", "#8a5fc7", "#cfcbc0"],
+  };
+
+  const count = counts[intensity];
+  const [dMin, dMax] = durations[intensity];
+  const colors = palettes[intensity];
+  const container = document.createElement("div");
+  container.style.cssText = "position:fixed;inset:0;pointer-events:none;z-index:99998;overflow:hidden;";
+  document.body.appendChild(container);
+
+  for (let i = 0; i < count; i++) {
+    const piece = document.createElement("div");
+    piece.className = "confetti-piece";
+    const color = colors[Math.floor(Math.random() * colors.length)];
+    const left = Math.random() * 100;
+    const delay = Math.random() * 1200;
+    const dur = dMin + Math.random() * (dMax - dMin);
+    const size = 7 + Math.random() * 9;
+    piece.style.cssText = `
+      left:${left}%;
+      background:${color};
+      width:${size}px;
+      height:${size * 1.4}px;
+      animation-duration:${dur}ms;
+      animation-delay:${delay}ms;
+    `;
+    container.appendChild(piece);
+  }
+
+  // Fireworks bursts for slam/goat
+  if (intensity !== "festival") {
+    const burstCount = intensity === "slam" ? 6 : 4;
+    for (let b = 0; b < burstCount; b++) {
+      setTimeout(() => {
+        const fw = document.createElement("div");
+        fw.className = "firework";
+        const x = 10 + Math.random() * 80;
+        const y = 5 + Math.random() * 50;
+        fw.style.cssText = `left:${x}%;top:${y}%;`;
+        const sparkColors = palettes[intensity];
+        for (let s = 0; s < 20; s++) {
+          const spark = document.createElement("div");
+          spark.className = "firework-spark";
+          const angle = (s / 20) * Math.PI * 2;
+          const dist = 60 + Math.random() * 80;
+          spark.style.cssText = `
+            background:${sparkColors[s % sparkColors.length]};
+            --tx:${Math.cos(angle) * dist}px;
+            --ty:${Math.sin(angle) * dist}px;
+            animation-duration:${600 + Math.random() * 500}ms;
+            animation-delay:${Math.random() * 200}ms;
+          `;
+          fw.appendChild(spark);
+        }
+        document.body.appendChild(fw);
+        setTimeout(() => fw.remove(), 1200);
+      }, b * 350 + Math.random() * 200);
+    }
+  }
+
+  // Clean up after animation completes
+  setTimeout(() => container.remove(), dMax + 1400);
+}
 // Uses Web Audio API — no files, no dependencies. Creates a mechanical
 // clicking sound that speeds up at the start and slows to a stop, like a
 // real slot machine reel. Gracefully silenced if the browser blocks audio.
@@ -1117,7 +1234,11 @@ function finishFestival(fest, teams, highlights) {
   game.grandTotal += playerScore;
   // Conquering a festival is permanent for the run — the heart of the Grand Slam.
   const newlyConquered = won && !game.conquered.has(fest.key);
-  if (won) game.conquered.add(fest.key);
+  if (won) {
+    game.conquered.add(fest.key);
+    // Confetti intensity depends on whether it's a new conquest
+    setTimeout(() => launchConfetti(newlyConquered ? "slam" : "festival"), 400);
+  }
   game.results.push({
     season: game.season,
     festival: fest.name,
@@ -1425,6 +1546,7 @@ function renderGameOver() {
   view.querySelector("#restart").addEventListener("click", () => location.reload());
   if (grandSlam) {
     view.querySelector("#faceGoat").addEventListener("click", renderGoatIntro);
+    setTimeout(() => launchConfetti("slam"), 500);
   }
   root().appendChild(view);
 }
@@ -1734,7 +1856,7 @@ function renderGoatResult(playerWins, goatWins) {
   `);
   view.querySelector("#restart").addEventListener("click", () => location.reload());
   root().appendChild(view);
-}
+  if (won) setTimeout(() => launchConfetti("goat"), 400);
 
 // Build the shareable text card summarising crew, festivals won and per-season
 // scores, then wire X / Facebook / clipboard buttons to it.
