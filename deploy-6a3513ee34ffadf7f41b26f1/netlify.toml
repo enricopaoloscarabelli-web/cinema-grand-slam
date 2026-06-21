@@ -1,12 +1,2 @@
-# Cinema Siqueiros — static single-page game.
-# No build step: the game is plain HTML/CSS/ES modules served from /public.
-
 [build]
-  publish = "public"
-  command = ""
-
-[[headers]]
-  for = "/*"
-  [headers.values]
-    X-Frame-Options = "DENY"
-    X-Content-Type-Options = "nosniff"
+  publish = "deploy-6a3513ee34ffadf7f41b26f1"
