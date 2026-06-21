@@ -196,12 +196,12 @@ export function components(team, easyMode = false) {
     cinematography: team["Cinematographer"] ? team["Cinematographer"].rating : 0,
     music: team["Composer"] ? team["Composer"].rating : 0,
     drama: avg(team, DRAMA_ROLES),
-    political:   bonusStrength(team, "political",   easyMode ? 7 : 7),
-    avantgarde:  bonusStrength(team, "avantgarde",  easyMode ? 4 : 4),
-    hipster:     bonusStrength(team, "hipster",     easyMode ? 4 : 4),
-    starsystem:  bonusStrength(team, "starsystem",  easyMode ? 7 : 7),
-    auteur:      bonusStrength(team, "auteur",      easyMode ? 5 : 5),
-    social:      bonusStrength(team, "social",      easyMode ? 5 : 5),
+    political:   bonusStrength(team, "political",   easyMode ? 7 : 8),
+    avantgarde:  bonusStrength(team, "avantgarde",  easyMode ? 4 : 5),
+    hipster:     bonusStrength(team, "hipster",     easyMode ? 4 : 5),
+    starsystem:  bonusStrength(team, "starsystem",  easyMode ? 7 : 8),
+    auteur:      bonusStrength(team, "auteur",      easyMode ? 5 : 6),
+    social:      bonusStrength(team, "social",      easyMode ? 5 : 6),
   };
 }
 
