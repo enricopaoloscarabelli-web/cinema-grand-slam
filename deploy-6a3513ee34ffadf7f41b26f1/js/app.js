@@ -1857,7 +1857,7 @@ function renderGoatResult(playerWins, goatWins) {
   view.querySelector("#restart").addEventListener("click", () => location.reload());
   root().appendChild(view);
   if (won) setTimeout(() => launchConfetti("goat"), 400);
-
+}
 // Build the shareable text card summarising crew, festivals won and per-season
 // scores, then wire X / Facebook / clipboard buttons to it.
 function shareCardText(tallyRows, grandSlam) {
