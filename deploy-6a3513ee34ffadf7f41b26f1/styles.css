@@ -1884,3 +1884,540 @@ body {
   border-color: rgba(217, 127, 123, 0.4);
 }
 
+
+/* ── GOAT Challenge ──────────────────────────────────────────────────────────
+   Film-strip aesthetic: gold accents, dramatic shadows, cinematic typography.
+   ───────────────────────────────────────────────────────────────────────── */
+
+/* Filmstrip top border on GOAT screens */
+.goat-intro::before,
+.goat-win::before,
+.goat-fail::before {
+  content: "";
+  display: block;
+  height: 6px;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--gold) 0px, var(--gold) 18px,
+    transparent 18px, transparent 28px
+  );
+  border-radius: 3px;
+  margin-bottom: 28px;
+  opacity: 0.6;
+}
+
+.goat-title {
+  font-family: var(--serif);
+  font-size: clamp(2.2rem, 6vw, 3.8rem);
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  color: var(--gold);
+  margin: 8px 0 12px;
+  text-shadow: 0 4px 32px rgba(231, 198, 107, 0.35);
+}
+
+.goat-sub {
+  max-width: 560px;
+  margin: 0 auto 28px;
+  color: #cfcbc0;
+  font-size: 1.05rem;
+  line-height: 1.6;
+}
+
+/* ── Roster comparison table ───────────────────────────────────────────────── */
+.roster-comparison {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  overflow: hidden;
+  margin: 0 auto 28px;
+  max-width: 780px;
+  box-shadow: var(--shadow);
+}
+
+.cmp-header {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  background: linear-gradient(135deg, rgba(231, 198, 107, 0.1), rgba(231, 198, 107, 0.04));
+  border-bottom: 1px solid var(--line);
+  padding: 12px 16px;
+}
+
+.cmp-header-player {
+  font-family: var(--serif);
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: var(--gold);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cmp-header-goat {
+  font-family: var(--serif);
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: #b48ce0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.cmp-avg {
+  font-size: 0.78rem;
+  font-weight: 600;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 2px 10px;
+  color: var(--muted);
+}
+
+.cmp-avg.cmp-avg-good {
+  color: var(--good);
+  border-color: rgba(111, 207, 151, 0.4);
+}
+
+.cmp-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.roster-cmp-row {
+  border-bottom: 1px solid rgba(42, 42, 56, 0.6);
+  transition: background 0.15s;
+}
+
+.roster-cmp-row:last-child {
+  border-bottom: none;
+}
+
+.roster-cmp-row:hover {
+  background: rgba(231, 198, 107, 0.04);
+}
+
+.cmp-role {
+  color: var(--muted);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 8px 14px;
+  white-space: nowrap;
+  width: 140px;
+}
+
+.cmp-player {
+  padding: 8px 10px 8px 14px;
+  text-align: left;
+}
+
+.cmp-goat {
+  padding: 8px 14px 8px 10px;
+  text-align: right;
+}
+
+.cmp-player,
+.cmp-goat {
+  display: table-cell;
+}
+
+.cmp-player .cmp-name,
+.cmp-goat .cmp-name {
+  color: var(--ink);
+  font-weight: 500;
+}
+
+.cmp-player .cmp-rating,
+.cmp-goat .cmp-rating {
+  display: inline-block;
+  font-family: var(--serif);
+  font-weight: 700;
+  font-size: 0.88rem;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 1px 7px;
+  margin: 0 6px;
+  color: var(--muted);
+}
+
+.cmp-player.cmp-winner .cmp-rating {
+  color: var(--good);
+  border-color: rgba(111, 207, 151, 0.4);
+}
+
+.cmp-goat.cmp-winner .cmp-rating {
+  color: #b48ce0;
+  border-color: rgba(180, 140, 224, 0.4);
+}
+
+.cmp-vs {
+  color: var(--line);
+  font-size: 0.7rem;
+  text-align: center;
+  padding: 0 4px;
+  width: 28px;
+}
+
+.cmp-missing {
+  color: var(--line);
+}
+
+.cmp-hint {
+  font-size: 0.9rem;
+  margin: 10px 0 0;
+  padding: 8px 14px;
+  border-radius: 8px;
+}
+
+.cmp-hint.good {
+  color: var(--good);
+  background: rgba(111, 207, 151, 0.08);
+  border: 1px solid rgba(111, 207, 151, 0.2);
+}
+
+.cmp-hint.warn {
+  color: #e0a86c;
+  background: rgba(224, 168, 108, 0.08);
+  border: 1px solid rgba(224, 168, 108, 0.2);
+}
+
+/* ── GOAT format box ────────────────────────────────────────────────────────── */
+.goat-format {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--gold);
+  border-radius: var(--r);
+  padding: 18px 22px;
+  max-width: 560px;
+  margin: 0 auto 28px;
+  text-align: left;
+}
+
+.goat-format h3 {
+  font-family: var(--serif);
+  font-size: 1.2rem;
+  margin: 0 0 8px;
+  color: var(--gold);
+}
+
+.goat-format p {
+  color: #cfcbc0;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  margin: 6px 0 0;
+}
+
+/* ── GOAT button ────────────────────────────────────────────────────────────── */
+.btn-goat {
+  background: linear-gradient(135deg, #b48ce0, #8a5fc7);
+  color: #fff;
+  border: none;
+  box-shadow: 0 10px 30px rgba(180, 140, 224, 0.32);
+}
+
+.btn-goat:hover {
+  box-shadow: 0 14px 40px rgba(180, 140, 224, 0.45);
+}
+
+/* ── GOAT round live screen ─────────────────────────────────────────────────── */
+.goat-round .lb-row.is-goat .lb-fill {
+  background: linear-gradient(90deg, #8a5fc7, #b48ce0);
+}
+
+.goat-board .lb-row.is-goat {
+  border-left: 3px solid #b48ce0;
+}
+
+/* Collapsible roster comparison during live round */
+.goat-roster-cmp-live {
+  margin: 16px 0;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  overflow: hidden;
+}
+
+.goat-roster-cmp-live summary {
+  padding: 10px 16px;
+  cursor: pointer;
+  font-size: 0.88rem;
+  color: var(--muted);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  user-select: none;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: color 0.15s;
+}
+
+.goat-roster-cmp-live summary:hover {
+  color: var(--ink);
+}
+
+.goat-roster-cmp-live[open] summary {
+  color: var(--gold);
+  border-bottom: 1px solid var(--line);
+}
+
+/* ── GOAT result screens ────────────────────────────────────────────────────── */
+.goat-win .slam-verdict,
+.goat-fail .slam-verdict {
+  font-family: var(--serif);
+  font-size: clamp(2rem, 5vw, 3.2rem);
+  font-weight: 900;
+  margin: 16px 0 12px;
+}
+
+.goat-win .slam-verdict {
+  color: var(--gold);
+  text-shadow: 0 4px 32px rgba(231, 198, 107, 0.4);
+}
+
+.goat-fail .slam-verdict {
+  color: var(--bad);
+}
+
+.slam-tagline {
+  font-size: 1.08rem;
+  color: #cfcbc0;
+  max-width: 520px;
+  margin: 0 auto 28px;
+  line-height: 1.6;
+}
+
+.goat-score-summary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  margin: 24px auto 32px;
+}
+
+.goat-score-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  padding: 18px 32px;
+  min-width: 120px;
+}
+
+.goat-score-box.win {
+  border-color: var(--gold);
+  background: rgba(231, 198, 107, 0.08);
+}
+
+.gsb-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.gsb-score {
+  font-family: var(--serif);
+  font-size: 3rem;
+  font-weight: 900;
+  color: var(--gold);
+  line-height: 1;
+}
+
+.goat-score-sep {
+  font-family: var(--serif);
+  font-size: 2rem;
+  color: var(--line);
+}
+
+/* ── GOAT round result ──────────────────────────────────────────────────────── */
+.goat-round-result .result-verdict {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  padding: 18px 22px;
+  max-width: 500px;
+  margin: 0 auto 22px;
+  text-align: left;
+}
+
+.goat-round-result .result-verdict.win {
+  border-left: 4px solid var(--good);
+  background: rgba(111, 207, 151, 0.06);
+}
+
+.goat-round-result .result-verdict.bad {
+  border-left: 4px solid var(--bad);
+  background: rgba(224, 108, 117, 0.06);
+}
+
+.verdict-medal {
+  font-size: 2.2rem;
+  line-height: 1;
+}
+
+.verdict-sub {
+  font-size: 0.88rem;
+  margin: 4px 0 0;
+}
+
+/* ── Nolan note ─────────────────────────────────────────────────────────────── */
+.nolan-note {
+  font-size: 0.75rem;
+  color: var(--muted);
+  text-align: center;
+  margin: 10px 0 0;
+  line-height: 1.5;
+}
+
+/* ── Easy mode banner ────────────────────────────────────────────────────────── */
+.easy-banner {
+  background: rgba(111, 207, 151, 0.08);
+  border: 1px solid rgba(111, 207, 151, 0.25);
+  border-left: 3px solid var(--good);
+  border-radius: 10px;
+  padding: 12px 16px;
+  font-size: 0.9rem;
+  color: #a8dfc0;
+  margin: 0 0 20px;
+  line-height: 1.6;
+}
+
+/* ── Visual improvements ─────────────────────────────────────────────────────
+   Cinematic enhancements: film-perforations roadmap, richer live-sim,
+   better leaderboard bars, glowing festival icons.
+   ───────────────────────────────────────────────────────────────────────── */
+
+/* Roadmap: film-strip perforations on sides */
+.roadmap {
+  position: relative;
+}
+
+.roadmap::before,
+.roadmap::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 8px;
+  background: repeating-linear-gradient(
+    180deg,
+    var(--panel-2) 0px, var(--panel-2) 10px,
+    transparent 10px, transparent 16px
+  );
+  opacity: 0.4;
+}
+
+.roadmap::before { left: 0; }
+.roadmap::after  { right: 0; }
+
+/* Glowing festival trophy icons on roadmap when won */
+.trophy-item.won .trophy-icon {
+  filter: drop-shadow(0 0 8px rgba(231, 198, 107, 0.7));
+  animation: trophyPulse 2.5s ease-in-out infinite;
+}
+
+@keyframes trophyPulse {
+  0%, 100% { filter: drop-shadow(0 0 6px rgba(231, 198, 107, 0.5)); }
+  50%       { filter: drop-shadow(0 0 14px rgba(231, 198, 107, 0.9)); }
+}
+
+/* Live sim: richer leaderboard bars */
+.lb-fill {
+  transition: width 0.08s linear;
+  background: linear-gradient(90deg, rgba(231,198,107,0.6), var(--gold));
+  border-radius: 0 4px 4px 0;
+}
+
+.lb-row.is-player .lb-fill {
+  background: linear-gradient(90deg, #e7c66b88, var(--gold-2));
+  box-shadow: 0 0 12px rgba(231, 198, 107, 0.4);
+}
+
+/* Act banner: cinematic flash */
+.act-banner.flash {
+  animation: actFlash 0.6s ease both;
+}
+
+@keyframes actFlash {
+  from {
+    background: rgba(231, 198, 107, 0.22);
+    transform: scale(1.01);
+  }
+}
+
+/* Festival intro: glowing icon */
+.fest-icon-large {
+  font-size: 4rem;
+  line-height: 1;
+  filter: drop-shadow(0 0 18px rgba(231, 198, 107, 0.45));
+  margin-bottom: 8px;
+  display: block;
+}
+
+/* Mode select buttons: film-ticket style */
+.mode-btn {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: left;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  padding: 14px 18px;
+  cursor: pointer;
+  color: var(--ink);
+  font-family: var(--sans);
+  transition: border-color 0.2s, background 0.2s, transform 0.12s;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Tear-off left edge like a ticket */
+.mode-btn::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: var(--gold);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.mode-btn:hover {
+  border-color: rgba(231, 198, 107, 0.4);
+  background: rgba(231, 198, 107, 0.06);
+  transform: translateY(-1px);
+}
+
+.mode-btn.active {
+  border-color: var(--gold);
+  background: rgba(231, 198, 107, 0.1);
+}
+
+.mode-btn.active::before {
+  opacity: 1;
+}
+
+.mode-name {
+  font-weight: 700;
+  font-size: 0.97rem;
+}
+
+.mode-desc {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
