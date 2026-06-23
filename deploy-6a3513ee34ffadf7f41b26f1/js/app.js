@@ -41,7 +41,7 @@ async function sbFetch(path, options = {}) {
 
 async function submitScore(playerName, score, festivalsWon, grandSlam) {
   try {
-    await sbFetch("leaderboard", "POST", {
+    await sbFetch("/rest/v1/leaderboard", "POST", {
       player_name: playerName.trim().slice(0, 30),
       score: parseInt(score, 10),
       festivals_won: festivalsWon,
@@ -57,7 +57,7 @@ async function submitScore(playerName, score, festivalsWon, grandSlam) {
 async function fetchLeaderboard() {
   try {
     const data = await sbFetch(
-      "leaderboard?select=player_name,score,festivals_won,grand_slam,created_at&order=score.desc&limit=15",
+      "/rest/v1/leaderboard?select=player_name,score,festivals_won,grand_slam,created_at&order=score.desc&limit=15",
       "GET"
     );
     return data || [];
