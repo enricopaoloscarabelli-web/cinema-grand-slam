@@ -41,8 +41,7 @@ async function sbFetch(path, options = {}) {
 
 async function submitScore(playerName, score, festivalsWon, grandSlam) {
   try {
-    // Passiamo i parametri esattamente come richiesto da sbFetch: percorso, metodo e oggetto dati
-    await sbFetch("/rest/v1/leaderboard", "POST", {
+    await sbFetch("leaderboard", "POST", {
       player_name: playerName.trim().slice(0, 30),
       score: parseInt(score, 10),
       festivals_won: festivalsWon,
