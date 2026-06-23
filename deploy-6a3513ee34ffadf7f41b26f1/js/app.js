@@ -1801,7 +1801,6 @@ async function renderLeaderboardScreen(currentTab = "dummies") {
     </section>
   `);
 
-  // Configurazione dei click sui rispettivi tab
   view.querySelector("#tab-dummies").addEventListener("click", () => renderLeaderboardScreen("dummies"));
   view.querySelector("#tab-normal").addEventListener("click", () => renderLeaderboardScreen("normal"));
   view.querySelector("#tab-master").addEventListener("click", () => renderLeaderboardScreen("master"));
@@ -1815,7 +1814,6 @@ async function renderLeaderboardScreen(currentTab = "dummies") {
   });
   root().appendChild(view);
 
-  // Scarica i dati filtrati
   const rows = await fetchLeaderboard(currentTab);
   const table = view.querySelector("#lbTable");
 
