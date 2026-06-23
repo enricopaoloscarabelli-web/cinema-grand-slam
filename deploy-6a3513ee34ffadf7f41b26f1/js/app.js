@@ -57,7 +57,8 @@ async function submitScore(playerName, score, festivalsWon, grandSlam) {
 async function fetchLeaderboard() {
   try {
     const data = await sbFetch(
-      "leaderboard?select=player_name,score,festivals_won,grand_slam,created_at&order=score.desc&limit=15"
+      "leaderboard?select=player_name,score,festivals_won,grand_slam,created_at&order=score.desc&limit=15",
+      "GET"
     );
     return data || [];
   } catch (e) {
