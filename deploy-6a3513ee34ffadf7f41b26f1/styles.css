@@ -1289,9 +1289,9 @@ body {
 /* ── humorous draft disclaimer (low-emphasis easter egg) ───────────────────── */
 .draft-disclaimer {
   text-align: center;
-  font-size: 0.90rem;
-  color: #e7c66b;
-  opacity: 1.0;
+  font-size: 0.72rem;
+  color: #5e5e70;
+  opacity: 0.7;
   margin: 34px auto 0;
   max-width: 560px;
   line-height: 1.5;
@@ -2421,3 +2421,247 @@ body {
   color: var(--muted);
 }
 
+
+/* ── Resume / Continue saved career button ─────────────────────────────── */
+.btn-resume {
+  background: linear-gradient(135deg, #4a9d7a, #2e7d5e);
+  color: #fff;
+  border: none;
+  box-shadow: 0 8px 24px rgba(74, 157, 122, 0.3);
+}
+.btn-resume:hover {
+  box-shadow: 0 12px 32px rgba(74, 157, 122, 0.45);
+}
+
+/* ── Home button in roadmap ─────────────────────────────────────────────── */
+.btn-home {
+  background: none;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--muted);
+  font-size: 1.1rem;
+  padding: 4px 8px;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+  flex-shrink: 0;
+  line-height: 1;
+}
+.btn-home:hover {
+  color: var(--gold);
+  border-color: var(--gold);
+  background: rgba(231, 198, 107, 0.08);
+}
+
+/* ── Detailed career statistics ─────────────────────────────────────────── */
+.detailed-stats {
+  margin: 28px 0;
+  text-align: left;
+  max-width: 700px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 12px;
+  margin: 14px 0 20px;
+}
+
+.stat-card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.stat-card.highlight {
+  border-color: rgba(231, 198, 107, 0.4);
+  background: rgba(231, 198, 107, 0.06);
+}
+
+.stat-card.bad {
+  border-color: rgba(224, 108, 117, 0.3);
+  background: rgba(224, 108, 117, 0.05);
+}
+
+.stat-icon {
+  font-size: 1.3rem;
+  line-height: 1;
+}
+
+.stat-label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.stat-value {
+  font-family: var(--serif);
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1.2;
+}
+
+.stat-sub {
+  font-size: 0.76rem;
+  color: var(--muted);
+}
+
+/* Season scores bar chart */
+.season-scores-bar {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  padding: 16px 18px;
+}
+
+.season-scores-bar h4 {
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  margin: 0 0 12px;
+  font-weight: 600;
+}
+
+.ssb-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ssb-item {
+  display: grid;
+  grid-template-columns: 28px 1fr 80px;
+  align-items: center;
+  gap: 10px;
+}
+
+.ssb-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.ssb-track {
+  height: 10px;
+  background: var(--panel-2);
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.ssb-fill {
+  height: 100%;
+  background: linear-gradient(90deg, rgba(231,198,107,0.6), var(--gold));
+  border-radius: 5px;
+  transition: width 0.6s ease;
+}
+
+.ssb-val {
+  font-size: 0.82rem;
+  color: var(--ink);
+  font-weight: 600;
+  text-align: right;
+}
+
+/* ── Player name input (intro) ──────────────────────────────────────────── */
+.player-name-box {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 380px;
+  margin: 0 auto 16px;
+  text-align: left;
+}
+.player-name-label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--muted);
+  letter-spacing: 0.04em;
+}
+.player-name-input {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 1rem;
+  padding: 10px 14px;
+  outline: none;
+  transition: border-color 0.2s;
+  width: 100%;
+  box-sizing: border-box;
+}
+.player-name-input:focus {
+  border-color: var(--gold);
+}
+
+/* ── Leaderboard submit box (game over) ─────────────────────────────────── */
+.leaderboard-submit {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  padding: 20px 22px;
+  max-width: 520px;
+  margin: 24px auto;
+  text-align: left;
+}
+.lb-submit-row {
+  display: flex;
+  gap: 10px;
+  margin: 12px 0 8px;
+}
+.lb-submit-row .player-name-input {
+  flex: 1;
+}
+.lb-submit-note {
+  margin: 0 0 12px;
+}
+.lb-ok { color: var(--good); margin: 8px 0 0; font-size: 0.9rem; }
+.lb-err { color: var(--bad); margin: 8px 0 0; font-size: 0.9rem; }
+
+/* ── Global leaderboard screen ──────────────────────────────────────────── */
+.leaderboard-screen {
+  max-width: 640px;
+  margin: 0 auto;
+}
+.lb-global-wrap {
+  margin: 20px 0;
+}
+.lb-global-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.92rem;
+}
+.lb-global-table thead th {
+  text-align: left;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--line);
+}
+.lb-global-row {
+  border-bottom: 1px solid rgba(42,42,56,0.5);
+  transition: background 0.15s;
+}
+.lb-global-row:hover { background: rgba(231,198,107,0.04); }
+.lb-global-row td { padding: 10px 12px; }
+.lb-global-row.top3 { background: rgba(231,198,107,0.06); }
+.lb-global-row.grand-slam-row .lb-name-cell::after {
+  content: " 🏆";
+  font-size: 0.75rem;
+}
+.lb-rank-cell { font-size: 1.2rem; width: 40px; }
+.lb-name-cell { font-weight: 600; color: var(--ink); }
+.lb-score-cell { font-family: var(--serif); font-weight: 700; color: var(--gold); }
+.lb-wins-cell { color: var(--muted); }
+.lb-slam-cell { font-size: 0.78rem; color: var(--gold); font-weight: 600; }
