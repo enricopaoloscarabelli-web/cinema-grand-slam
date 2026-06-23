@@ -22,7 +22,7 @@ import { DECISIONS } from "./decisions.js";
 
 // ── SUPABASE LEADERBOARD ──────────────────────────────────────────────────
 const SUPABASE_URL = "https://jqiqwodzqpjdqqbnovjw.supabase.co";
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpxaXF3b2R6cXBqZHFxYm5vdmp3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIxNDMxNDMsImV4cCI6MjA5NzcxOTE0M30.88Ya5koM0wNMvL7XCH0HgYf_h89XP0RsbxfXqiMbNCo";
+const SUPABASE_KEY = "sb_publishable_SWXsqqRBd1Zru8tfnUiCVQ_r0ep_R92";
 
 async function sbFetch(path, options = {}) {
   const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
