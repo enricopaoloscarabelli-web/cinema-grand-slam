@@ -41,12 +41,26 @@ async function sbFetch(path, options = {}) {
 
 async function submitScore(playerName, score, festivalsWon, grandSlam) {
   try {
-    await sbFetch(`${SUPABASE_URL}/rest/v1/leaderboard`, "POST", {
-      player_name: playerName.trim().slice(0, 30),
-      score: parseInt(score, 10),
-      festivals_won: festivalsWon,
-      grand_slam: grandSlam
+    const response = await fetch(`${SUPABASE_URL}/rest/v1/leaderboard`, {
+      method: "POST",
+      headers: {
+        "apikey": SUPABASE_KEY,
+        "Authorization": `Bearer ${SUPABASE_KEY}`,
+        "Content-Type": "application/json",
+        "Prefer": "return=minimal"
+      },
+      body: JSON.stringify({
+        player_name: playerName.trim().slice(0, 30),
+        score: parseInt(score, 10),
+        festivals_won: festivalsWon,
+        grand_slam: grandSlam
+      })
     });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
     return true;
   } catch (e) {
     console.error("Score submit failed:", e);
@@ -56,10 +70,22 @@ async function submitScore(playerName, score, festivalsWon, grandSlam) {
 
 async function fetchLeaderboard() {
   try {
-    const data = await sbFetch(
+    const response = await fetch(
       `${SUPABASE_URL}/rest/v1/leaderboard?select=player_name,score,festivals_won,grand_slam,created_at&order=score.desc&limit=15`,
-      "GET"
+      {
+        method: "GET",
+        headers: {
+          "apikey": SUPABASE_KEY,
+          "Authorization": `Bearer ${SUPABASE_KEY}`
+        }
+      }
     );
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
     return data || [];
   } catch (e) {
     console.error("Leaderboard fetch failed:", e);
