@@ -20,6 +20,56 @@ import {
 import { rollEvent, eventDelta } from "./events.js";
 import { DECISIONS } from "./decisions.js";
 
+// ── SUPABASE LEADERBOARD ──────────────────────────────────────────────────
+const SUPABASE_URL = "https://jqiqwodzqpjdqqbnovJw.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpxaXF3b2R6cXBqZHFxYm5vdmp3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIxNDMxNDMsImV4cCI6MjA5NzcxOTE0M30.88Ya5koM0wNMvL7XCH0HgYf_h89XP0RsbxfXqiMbNCo";
+
+async function sbFetch(path, options = {}) {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
+    ...options,
+    headers: {
+      "apikey": SUPABASE_KEY,
+      "Authorization": `Bearer ${SUPABASE_KEY}`,
+      "Content-Type": "application/json",
+      "Prefer": options.prefer || "",
+      ...(options.headers || {}),
+    },
+  });
+  if (!res.ok) throw new Error(`Supabase error: ${res.status}`);
+  return res.json().catch(() => null);
+}
+
+async function submitScore(playerName, score, festivalsWon, grandSlam) {
+  try {
+    await sbFetch("leaderboard", {
+      method: "POST",
+      prefer: "return=minimal",
+      body: JSON.stringify({
+        player_name: playerName.trim().slice(0, 30),
+        score,
+        festivals_won: festivalsWon,
+        grand_slam: grandSlam,
+      }),
+    });
+    return true;
+  } catch (e) {
+    console.error("Score submit failed:", e);
+    return false;
+  }
+}
+
+async function fetchLeaderboard() {
+  try {
+    const data = await sbFetch(
+      "leaderboard?select=player_name,score,festivals_won,grand_slam,created_at&order=score.desc&limit=15"
+    );
+    return data || [];
+  } catch (e) {
+    console.error("Leaderboard fetch failed:", e);
+    return [];
+  }
+}
+
 const TOTAL_SEASONS = 3;
 const REEL_ITEM_H = 92; // keep in sync with .reel-item height in CSS
 
@@ -259,12 +309,77 @@ const game = {
   usedDecisions: new Set(), // decision ids already shown this run (no repeats)
   isExpertMode: false, // Expert Mode: hide ratings/bonuses during the draft only
   isEasyMode: false,   // Easy Mode: unlimited redraws + original bonus values
+  playerName: "Anonymous", // set at game start for the leaderboard
 };
 
-// Expert Mode hides every card rating and bonus while the player is still
-// drafting/transferring crew — the underlying values are untouched, only the UI
-// is masked. Everything is revealed again the moment the crew is complete.
-function ratingsHidden() {
+// ── SAVE / LOAD (localStorage) ───────────────────────────────────────────
+// Serialises the mutable game state to JSON and stores it under a fixed key.
+// Sets containing strings (pickedNames, usedRosterIds, conquered, etc.) are
+// converted to arrays for JSON, then restored on load.
+// Called automatically after every meaningful state change.
+
+const SAVE_KEY = "cgs_save_v1";
+
+function saveGame() {
+  try {
+    const data = {
+      crew: game.crew,
+      pickedNames: [...game.pickedNames],
+      usedRosterIds: [...game.usedRosterIds],
+      started: game.started,
+      season: game.season,
+      grandTotal: game.grandTotal,
+      seasonScores: game.seasonScores,
+      results: game.results,
+      conquered: [...game.conquered],
+      transfersLeft: game.transfersLeft,
+      mode: game.mode,
+      _festivalIndex: game._festivalIndex || 0,
+      _seasonScore: game._seasonScore || 0,
+      festivalRep: game.festivalRep,
+      usedDecisions: [...game.usedDecisions],
+      isExpertMode: game.isExpertMode,
+      isEasyMode: game.isEasyMode,
+      redrawsLeft: game.redrawsLeft === Infinity ? "Infinity" : game.redrawsLeft,
+    };
+    localStorage.setItem(SAVE_KEY, JSON.stringify(data));
+  } catch (_) {}
+}
+
+function hasSave() {
+  try { return !!localStorage.getItem(SAVE_KEY); } catch (_) { return false; }
+}
+
+function deleteSave() {
+  try { localStorage.removeItem(SAVE_KEY); } catch (_) {}
+}
+
+function loadGame() {
+  try {
+    const raw = localStorage.getItem(SAVE_KEY);
+    if (!raw) return false;
+    const data = JSON.parse(raw);
+    game.crew           = data.crew || {};
+    game.pickedNames    = new Set(data.pickedNames || []);
+    game.usedRosterIds  = new Set(data.usedRosterIds || []);
+    game.started        = data.started || false;
+    game.season         = data.season || 1;
+    game.grandTotal     = data.grandTotal || 0;
+    game.seasonScores   = data.seasonScores || [];
+    game.results        = data.results || [];
+    game.conquered      = new Set(data.conquered || []);
+    game.transfersLeft  = data.transfersLeft || 0;
+    game.mode           = data.mode || "draft";
+    game._festivalIndex = data._festivalIndex || 0;
+    game._seasonScore   = data._seasonScore || 0;
+    game.festivalRep    = data.festivalRep || Object.fromEntries(FESTIVALS.map((f) => [f.key, 0]));
+    game.usedDecisions  = new Set(data.usedDecisions || []);
+    game.isExpertMode   = data.isExpertMode || false;
+    game.isEasyMode     = data.isEasyMode || false;
+    game.redrawsLeft    = data.redrawsLeft === "Infinity" ? Infinity : (data.redrawsLeft ?? 1);
+    return true;
+  } catch (_) { return false; }
+}
   return game.isExpertMode && (game.mode === "draft" || game.mode === "transfer");
 }
 
@@ -437,7 +552,13 @@ function renderIntro() {
         festival within three seasons. Win Cannes, Venice, Berlin, the Oscars,
         Sundance <em>and</em> Locarno to achieve the <b class="hl">Cinema Grand Slam</b>.
       </p>
+      <div class="player-name-box">
+        <label class="player-name-label" for="playerNameInput">🎬 Your name for the leaderboard</label>
+        <input class="player-name-input" id="playerNameInput" type="text" maxlength="30" placeholder="Enter your name..." autocomplete="off" />
+      </div>
       <button class="btn btn-primary btn-xl" id="begin">🎬 Begin Career</button>
+      ${hasSave() ? `<button class="btn btn-resume btn-xl" id="resume">▶ Continue saved career</button>` : ""}
+      <button class="btn btn-ghost" id="showLeaderboard">🏆 Global Leaderboard</button>
       <div class="mode-select" id="modeSelect" role="group" aria-label="Game mode">
         <button class="mode-btn" data-mode="easy">
           <span class="mode-name">🍿 Cinema for dummies (Nolan fan)</span>
@@ -459,8 +580,23 @@ function renderIntro() {
     </section>
   `);
   view.querySelector("#begin").addEventListener("click", () => {
+    const nameInput = view.querySelector("#playerNameInput");
+    game.playerName = nameInput && nameInput.value.trim() ? nameInput.value.trim() : "Anonymous";
+    deleteSave();
     startDraftTurn();
   });
+  const resumeBtn = view.querySelector("#resume");
+  if (resumeBtn) {
+    resumeBtn.addEventListener("click", () => {
+      const nameInput = view.querySelector("#playerNameInput");
+      if (nameInput && nameInput.value.trim()) game.playerName = nameInput.value.trim();
+      if (loadGame()) {
+        renderRoadmap();
+        resumeFromSave();
+      }
+    });
+  }
+  view.querySelector("#showLeaderboard").addEventListener("click", () => renderLeaderboardScreen());
   const modeSelect = view.querySelector("#modeSelect");
   const syncMode = () => {
     modeSelect.querySelectorAll(".mode-btn").forEach((btn) => {
@@ -488,10 +624,29 @@ function renderIntro() {
 // ───────────────────────────────────────────────────────────────────────────
 function startDraftTurn() {
   game.mode = "draft";
-  game.redrawsLeft = game.isEasyMode ? Infinity : 1; // Easy = unlimited redraws
+  game.redrawsLeft = game.isEasyMode ? Infinity : 1;
   game.started = true;
+  saveGame();
   renderRoadmap();
   renderDraft();
+}
+
+// Resume a saved career at the right screen based on saved state.
+function resumeFromSave() {
+  if (!game.started) { renderIntro(); return; }
+  if (crewComplete()) {
+    // Crew is done — resume at the right point in the season circuit
+    if (game.mode === "transfer") {
+      renderDraft();
+    } else if (game._festivalIndex < FESTIVALS.length) {
+      enterFestival();
+    } else {
+      renderSeasonEnd();
+    }
+  } else {
+    // Still drafting
+    renderDraft();
+  }
 }
 
 function renderDraft() {
@@ -787,6 +942,7 @@ function pickMember(member, roster) {
   game.crew[member.role] = entry;
   game.pickedNames.add(member.name);
   game.currentRoster = null;
+  saveGame();
 
   if (game.mode === "transfer") {
     flashToast(`✅ ${member.name} joins as ${member.role}`);
@@ -904,6 +1060,7 @@ function festivalLineup() {
 // (a separate layer from the in-festival random drama); otherwise we go straight
 // to the festival intro.
 function enterFestival() {
+  saveGame();
   const decision = rollDecision();
   if (decision) {
     renderDecision(decision, () => renderFestivalIntro());
@@ -1247,6 +1404,7 @@ function finishFestival(fest, teams, highlights) {
     score: playerScore,
     won,
   });
+  saveGame();
   renderRoadmap();
 
   root().innerHTML = "";
@@ -1427,10 +1585,12 @@ function renderSeasonEnd() {
       game.transfersLeft = 3;
       game.currentRoster = null;
       game.mode = "transfer";
+      saveGame();
       renderDraft();
     });
     view.querySelector("#skipTransfer").addEventListener("click", () => {
       game.season += 1;
+      saveGame();
       startSeasonCircuit();
     });
   }
@@ -1539,16 +1699,106 @@ function renderGameOver() {
       </div>
 
       ${grandSlam ? `<button class="btn btn-goat btn-xl" id="faceGoat">🐐 Face the GOAT</button>` : ""}
+      <div class="leaderboard-submit" id="lbSubmit">
+        <h3 class="recap-title">🌍 Global Leaderboard</h3>
+        <p class="muted">Submit your score to the global top 15.</p>
+        <div class="lb-submit-row">
+          <input class="player-name-input" id="submitName" type="text" maxlength="30"
+            placeholder="Your name..." value="${game.playerName !== "Anonymous" ? game.playerName : ""}" />
+          <button class="btn btn-primary" id="submitScoreBtn">Submit score</button>
+        </div>
+        <p class="lb-submit-note muted small">Score: <b>${fmt(game.grandTotal)}</b> · Festivals won: <b>${game.results.filter(r=>r.won).length}</b>${grandSlam ? " · 🏆 Grand Slam" : ""}</p>
+        <div id="lbResult"></div>
+        <button class="btn btn-ghost" id="viewLeaderboard">View global top 15 →</button>
+      </div>
       <button class="btn btn-primary btn-xl" id="restart">↺ Play again</button>
     </section>
   `);
   wireShareButtons(view, tallyRows, grandSlam);
-  view.querySelector("#restart").addEventListener("click", () => location.reload());
+  view.querySelector("#restart").addEventListener("click", () => { deleteSave(); location.reload(); });
   if (grandSlam) {
     view.querySelector("#faceGoat").addEventListener("click", renderGoatIntro);
     setTimeout(() => launchConfetti("slam"), 500);
   }
+
+  // Leaderboard submit
+  view.querySelector("#submitScoreBtn").addEventListener("click", async () => {
+    const nameInput = view.querySelector("#submitName");
+    const name = nameInput.value.trim() || "Anonymous";
+    const btn = view.querySelector("#submitScoreBtn");
+    const result = view.querySelector("#lbResult");
+    btn.disabled = true;
+    btn.textContent = "Submitting…";
+    const ok = await submitScore(name, game.grandTotal, game.results.filter(r=>r.won).length, grandSlam);
+    if (ok) {
+      result.innerHTML = `<p class="lb-ok">✅ Score submitted! Good luck in the rankings.</p>`;
+      btn.textContent = "Submitted ✓";
+    } else {
+      result.innerHTML = `<p class="lb-err">❌ Submission failed — check your connection.</p>`;
+      btn.disabled = false;
+      btn.textContent = "Try again";
+    }
+  });
+  view.querySelector("#viewLeaderboard").addEventListener("click", () => renderLeaderboardScreen());
+
   root().appendChild(view);
+}
+
+// ── GLOBAL LEADERBOARD SCREEN ──────────────────────────────────────────────
+async function renderLeaderboardScreen() {
+  root().innerHTML = "";
+  const view = el(`
+    <section class="screen leaderboard-screen">
+      <div class="intro-glow"></div>
+      <p class="kicker">Cinema Grand Slam</p>
+      <h1 class="goat-title">🌍 Global Top 15</h1>
+      <p class="goat-sub">The greatest producers in cinema history.</p>
+      <div id="lbTable" class="lb-global-wrap">
+        <p class="muted">Loading…</p>
+      </div>
+      <button class="btn btn-ghost" id="backFromLb">← Back</button>
+    </section>
+  `);
+  view.querySelector("#backFromLb").addEventListener("click", () => {
+    if (game.started) {
+      renderGameOver();
+    } else {
+      renderIntro();
+    }
+  });
+  root().appendChild(view);
+
+  const rows = await fetchLeaderboard();
+  const table = view.querySelector("#lbTable");
+
+  if (!rows.length) {
+    table.innerHTML = `<p class="muted">No scores yet — be the first!</p>`;
+    return;
+  }
+
+  const medals = ["🥇","🥈","🥉"];
+  table.innerHTML = `
+    <table class="lb-global-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Player</th>
+          <th>Score</th>
+          <th>Wins</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        ${rows.map((r, i) => `
+          <tr class="lb-global-row ${i < 3 ? "top3" : ""} ${r.grand_slam ? "grand-slam-row" : ""}">
+            <td class="lb-rank-cell">${medals[i] || i + 1}</td>
+            <td class="lb-name-cell">${r.player_name}</td>
+            <td class="lb-score-cell">${fmt(r.score)}</td>
+            <td class="lb-wins-cell">${r.festivals_won} 🏆</td>
+            <td class="lb-slam-cell">${r.grand_slam ? "🎬 Grand Slam" : ""}</td>
+          </tr>`).join("")}
+      </tbody>
+    </table>`;
 }
 
 // ── GOAT CHALLENGE ─────────────────────────────────────────────────────────
@@ -1854,7 +2104,7 @@ function renderGoatResult(playerWins, goatWins) {
       <button class="btn btn-primary btn-xl" id="restart">↺ Play again</button>
     </section>
   `);
-  view.querySelector("#restart").addEventListener("click", () => location.reload());
+  view.querySelector("#restart").addEventListener("click", () => { deleteSave(); location.reload(); });
   root().appendChild(view);
   if (won) setTimeout(() => launchConfetti("goat"), 400);
 }
