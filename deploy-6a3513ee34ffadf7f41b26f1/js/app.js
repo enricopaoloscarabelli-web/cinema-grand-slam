@@ -41,6 +41,9 @@ async function sbFetch(path, options = {}) {
 
 async function submitScore(playerName, score, festivalsWon, grandSlam) {
   try {
+    // Legge automaticamente la difficoltà corrente dall'oggetto game, oppure usa "dummies" come salvagente
+    const currentDifficulty = (typeof game !== "undefined" && game.difficulty) ? game.difficulty : "dummies";
+
     const response = await fetch(`${SUPABASE_URL}/rest/v1/leaderboard`, {
       method: "POST",
       headers: {
@@ -53,7 +56,8 @@ async function submitScore(playerName, score, festivalsWon, grandSlam) {
         player_name: playerName.trim().slice(0, 30),
         score: parseInt(score, 10),
         festivals_won: festivalsWon,
-        grand_slam: grandSlam
+        grand_slam: grandSlam,
+        difficulty: currentDifficulty.toLowerCase()
       })
     });
 
@@ -68,10 +72,10 @@ async function submitScore(playerName, score, festivalsWon, grandSlam) {
   }
 }
 
-async function fetchLeaderboard() {
+async function fetchLeaderboard(difficulty = "dummies") {
   try {
     const response = await fetch(
-      `${SUPABASE_URL}/rest/v1/leaderboard?select=player_name,score,festivals_won,grand_slam,created_at&order=score.desc&limit=15`,
+      `${SUPABASE_URL}/rest/v1/leaderboard?select=player_name,score,festivals_won,grand_slam,created_at&difficulty=eq.${difficulty.toLowerCase()}&order=score.desc&limit=15`,
       {
         method: "GET",
         headers: {
@@ -1769,7 +1773,7 @@ function renderGameOver() {
 }
 
 // ── GLOBAL LEADERBOARD SCREEN ──────────────────────────────────────────────
-async function renderLeaderboardScreen() {
+async function renderLeaderboardScreen(currentTab = "dummies") {
   root().innerHTML = "";
   const view = el(`
     <section class="screen leaderboard-screen">
@@ -1777,12 +1781,25 @@ async function renderLeaderboardScreen() {
       <p class="kicker">Cinema Grand Slam</p>
       <h1 class="goat-title">🌍 Global Top 15</h1>
       <p class="goat-sub">The greatest producers in cinema history.</p>
+      
+      <div class="lb-tabs" style="display: flex; gap: 10px; justify-content: center; margin-bottom: 20px;">
+        <button class="btn ${currentTab === "dummies" ? "btn-primary" : "btn-ghost"}" id="tab-dummies">🟢 For Dummies</button>
+        <button class="btn ${currentTab === "expert" ? "btn-primary" : "btn-ghost"}" id="tab-expert">🟡 Expert</button>
+        <button class="btn ${currentTab === "master" ? "btn-primary" : "btn-ghost"}" id="tab-master">🔴 Master</button>
+      </div>
+
       <div id="lbTable" class="lb-global-wrap">
-        <p class="muted">Loading…</p>
+        <p class="muted">Loading ${currentTab.toUpperCase()} leaderboard…</p>
       </div>
       <button class="btn btn-ghost" id="backFromLb">← Back</button>
     </section>
   `);
+
+  // Eventi al click sui tre pulsanti delle categorie
+  view.querySelector("#tab-dummies").addEventListener("click", () => renderLeaderboardScreen("dummies"));
+  view.querySelector("#tab-expert").addEventListener("click", () => renderLeaderboardScreen("expert"));
+  view.querySelector("#tab-master").addEventListener("click", () => renderLeaderboardScreen("master"));
+
   view.querySelector("#backFromLb").addEventListener("click", () => {
     if (game.started) {
       renderGameOver();
@@ -1792,11 +1809,12 @@ async function renderLeaderboardScreen() {
   });
   root().appendChild(view);
 
-  const rows = await fetchLeaderboard();
+  // Scarichiamo solo i dati corrispondenti al tab selezionato
+  const rows = await fetchLeaderboard(currentTab);
   const table = view.querySelector("#lbTable");
 
   if (!rows.length) {
-    table.innerHTML = `<p class="muted">No scores yet — be the first!</p>`;
+    table.innerHTML = `<p class="muted">No scores yet in ${currentTab.toUpperCase()} — be the first!</p>`;
     return;
   }
 
