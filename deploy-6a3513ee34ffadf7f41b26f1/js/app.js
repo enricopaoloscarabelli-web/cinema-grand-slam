@@ -380,6 +380,7 @@ function loadGame() {
     return true;
   } catch (_) { return false; }
 }
+function ratingsHidden() {
   return game.isExpertMode && (game.mode === "draft" || game.mode === "transfer");
 }
 
