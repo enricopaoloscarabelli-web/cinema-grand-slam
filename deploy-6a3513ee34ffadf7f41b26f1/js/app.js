@@ -41,8 +41,14 @@ async function sbFetch(path, options = {}) {
 
 async function submitScore(playerName, score, festivalsWon, grandSlam) {
   try {
-    // Legge automaticamente la difficoltà corrente dall'oggetto game, oppure usa "dummies" come salvagente
-    const currentDifficulty = (typeof game !== "undefined" && game.difficulty) ? game.difficulty : "dummies";
+    let actualDifficulty = "normal";
+    if (typeof game !== "undefined") {
+      if (game.isEasyMode) {
+        actualDifficulty = "dummies";
+      } else if (game.isExpertMode) {
+        actualDifficulty = "master";
+      }
+    }
 
     const response = await fetch(`${SUPABASE_URL}/rest/v1/leaderboard`, {
       method: "POST",
@@ -57,7 +63,7 @@ async function submitScore(playerName, score, festivalsWon, grandSlam) {
         score: parseInt(score, 10),
         festivals_won: festivalsWon,
         grand_slam: grandSlam,
-        difficulty: currentDifficulty.toLowerCase()
+        difficulty: actualDifficulty
       })
     });
 
@@ -1784,7 +1790,7 @@ async function renderLeaderboardScreen(currentTab = "dummies") {
       
       <div class="lb-tabs" style="display: flex; gap: 10px; justify-content: center; margin-bottom: 20px;">
         <button class="btn ${currentTab === "dummies" ? "btn-primary" : "btn-ghost"}" id="tab-dummies">🟢 For Dummies</button>
-        <button class="btn ${currentTab === "expert" ? "btn-primary" : "btn-ghost"}" id="tab-expert">🟡 Expert</button>
+        <button class="btn ${currentTab === "normal" ? "btn-primary" : "btn-ghost"}" id="tab-normal">🟡 Expert</button>
         <button class="btn ${currentTab === "master" ? "btn-primary" : "btn-ghost"}" id="tab-master">🔴 Master</button>
       </div>
 
@@ -1795,9 +1801,9 @@ async function renderLeaderboardScreen(currentTab = "dummies") {
     </section>
   `);
 
-  // Eventi al click sui tre pulsanti delle categorie
+  // Configurazione dei click sui rispettivi tab
   view.querySelector("#tab-dummies").addEventListener("click", () => renderLeaderboardScreen("dummies"));
-  view.querySelector("#tab-expert").addEventListener("click", () => renderLeaderboardScreen("expert"));
+  view.querySelector("#tab-normal").addEventListener("click", () => renderLeaderboardScreen("normal"));
   view.querySelector("#tab-master").addEventListener("click", () => renderLeaderboardScreen("master"));
 
   view.querySelector("#backFromLb").addEventListener("click", () => {
@@ -1809,7 +1815,7 @@ async function renderLeaderboardScreen(currentTab = "dummies") {
   });
   root().appendChild(view);
 
-  // Scarichiamo solo i dati corrispondenti al tab selezionato
+  // Scarica i dati filtrati
   const rows = await fetchLeaderboard(currentTab);
   const table = view.querySelector("#lbTable");
 
