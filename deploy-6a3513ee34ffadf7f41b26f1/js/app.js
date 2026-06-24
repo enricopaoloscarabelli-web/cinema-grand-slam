@@ -1856,21 +1856,30 @@ function renderGameOver() {
   }
 
   // Leaderboard submit
+  let submitAttempts = 0;
   view.querySelector("#submitScoreBtn").addEventListener("click", async () => {
+    if (submitAttempts >= 3) return; // max 3 tentativi totali
     const nameInput = view.querySelector("#submitName");
     const name = nameInput.value.trim() || "Anonymous";
     const btn = view.querySelector("#submitScoreBtn");
     const result = view.querySelector("#lbResult");
     btn.disabled = true;
     btn.textContent = "Submitting…";
+    submitAttempts++;
     const ok = await submitScore(name, game.grandTotal, game.results.filter(r=>r.won).length, grandSlam);
     if (ok) {
       result.innerHTML = `<p class="lb-ok">✅ Score submitted! Good luck in the rankings.</p>`;
       btn.textContent = "Submitted ✓";
+      btn.disabled = true; // permanentemente disabilitato dopo successo
+      nameInput.disabled = true;
     } else {
-      result.innerHTML = `<p class="lb-err">❌ Submission failed — check your connection.</p>`;
-      btn.disabled = false;
-      btn.textContent = "Try again";
+      result.innerHTML = `<p class="lb-err">❌ Submission failed — check your connection.${submitAttempts >= 3 ? " No more attempts." : ""}</p>`;
+      if (submitAttempts < 3) {
+        btn.disabled = false;
+        btn.textContent = `Try again (${3 - submitAttempts} left)`;
+      } else {
+        btn.textContent = "No more attempts";
+      }
     }
   });
   view.querySelector("#viewLeaderboard").addEventListener("click", () => renderLeaderboardScreen());
