@@ -343,6 +343,7 @@ const game = {
   isExpertMode: false, // Expert Mode: hide ratings/bonuses during the draft only
   isEasyMode: false,   // Easy Mode: unlimited redraws + original bonus values
   playerName: "Anonymous", // set at game start for the leaderboard
+  _scoredKeys: new Set(), // anti-cheat: "S1-cannes" etc. — never score twice
 };
 
 // ── SAVE / LOAD (localStorage) ───────────────────────────────────────────
@@ -374,6 +375,7 @@ function saveGame() {
       isExpertMode: game.isExpertMode,
       isEasyMode: game.isEasyMode,
       redrawsLeft: game.redrawsLeft === Infinity ? "Infinity" : game.redrawsLeft,
+      _scoredKeys: [...game._scoredKeys],
     };
     localStorage.setItem(SAVE_KEY, JSON.stringify(data));
   } catch (_) {}
@@ -410,6 +412,7 @@ function loadGame() {
     game.isExpertMode   = data.isExpertMode || false;
     game.isEasyMode     = data.isEasyMode || false;
     game.redrawsLeft    = data.redrawsLeft === "Infinity" ? Infinity : (data.redrawsLeft ?? 1);
+    game._scoredKeys    = new Set(data._scoredKeys || []);
     return true;
   } catch (_) { return false; }
 }
@@ -463,6 +466,7 @@ function renderRoadmap() {
   bar.classList.add("show");
   bar.innerHTML = `
     <div class="roadmap-inner">
+      <button class="btn-home" id="homeBtn" title="Return to home screen">🏠</button>
       <span class="roadmap-title">🎯 Road to the Cinema Grand Slam <span class="roadmap-count">${wonCount}/${FESTIVALS.length}</span></span>
       <div class="roadmap-trophies">
         ${FESTIVALS.map((f) => {
@@ -474,6 +478,11 @@ function renderRoadmap() {
         }).join("")}
       </div>
     </div>`;
+  bar.querySelector("#homeBtn").addEventListener("click", () => {
+    if (confirm("Return to home? Your progress is saved.")) {
+      renderIntro();
+    }
+  });
 }
 
 function crewSize() {
@@ -1421,23 +1430,31 @@ function finishFestival(fest, teams, highlights) {
   const playerRank = ranked.findIndex((t) => t.isPlayer) + 1;
   const playerScore = teams.find((t) => t.isPlayer).score;
   const won = playerRank === 1;
-  game._seasonScore += playerScore;
-  game.grandTotal += playerScore;
+
+  // Anti-cheat: each festival can only be scored once per season.
+  // If the player reloads and replays a festival, the score is ignored.
+  const scoreKey = `S${game.season}-${fest.key}`;
+  const alreadyScored = game._scoredKeys.has(scoreKey);
+  if (!alreadyScored) {
+    game._scoredKeys.add(scoreKey);
+    game._seasonScore += playerScore;
+    game.grandTotal += playerScore;
+    game.results.push({
+      season: game.season,
+      festival: fest.name,
+      icon: fest.icon,
+      rank: playerRank,
+      score: playerScore,
+      won,
+    });
+  }
+
   // Conquering a festival is permanent for the run — the heart of the Grand Slam.
   const newlyConquered = won && !game.conquered.has(fest.key);
   if (won) {
     game.conquered.add(fest.key);
-    // Confetti intensity depends on whether it's a new conquest
-    setTimeout(() => launchConfetti(newlyConquered ? "slam" : "festival"), 400);
+    if (!alreadyScored) setTimeout(() => launchConfetti(newlyConquered ? "slam" : "festival"), 400);
   }
-  game.results.push({
-    season: game.season,
-    festival: fest.name,
-    icon: fest.icon,
-    rank: playerRank,
-    score: playerScore,
-    won,
-  });
   saveGame();
   renderRoadmap();
 
@@ -1635,6 +1652,7 @@ function renderSeasonEnd() {
 // SCREEN: game over / final standings
 // ───────────────────────────────────────────────────────────────────────────
 function renderGameOver() {
+  deleteSave(); // anti-cheat: cancella il save appena si arriva alla fine
   root().innerHTML = "";
   const conquered = FESTIVALS.filter((f) => game.conquered.has(f.key));
   const missing = FESTIVALS.filter((f) => !game.conquered.has(f.key));
@@ -1685,6 +1703,88 @@ function renderGameOver() {
       }
 
       <p class="muted">${game.results.filter((r) => r.won).length} festival wins across ${game.results.length} screenings over ${TOTAL_SEASONS} seasons.</p>
+
+      <!-- ── DETAILED STATS ── -->
+      ${(() => {
+        const bestResult = game.results.reduce((b, r) => (!b || r.score > b.score) ? r : b, null);
+        const worstResult = game.results.reduce((b, r) => (!b || r.score < b.score) ? r : b, null);
+        const crewMembers = Object.entries(game.crew).map(([role, m]) => ({ role, ...m }));
+        const bestMember = crewMembers.sort((a, b) => b.rating - a.rating)[0];
+        const avgScore = game.results.length ? game.grandTotal / game.results.length : 0;
+        const winRate = game.results.length ? Math.round((game.results.filter(r => r.won).length / game.results.length) * 100) : 0;
+        const bestSeasonIdx = game.seasonScores.reduce((bi, s, i) => s > (game.seasonScores[bi] || 0) ? i : bi, 0);
+        const neverWon = FESTIVALS.filter(f => !Object.keys(winTally).includes(f.name));
+        return `
+        <div class="detailed-stats">
+          <h3 class="recap-title">📊 Career Statistics</h3>
+          <div class="stats-grid">
+            <div class="stat-card">
+              <span class="stat-icon">🎯</span>
+              <span class="stat-label">Total score</span>
+              <span class="stat-value">${fmt(game.grandTotal)}</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-icon">📈</span>
+              <span class="stat-label">Avg per festival</span>
+              <span class="stat-value">${fmt(avgScore)}</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-icon">🏆</span>
+              <span class="stat-label">Win rate</span>
+              <span class="stat-value">${winRate}%</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-icon">🎬</span>
+              <span class="stat-label">Festivals played</span>
+              <span class="stat-value">${game.results.length}</span>
+            </div>
+            ${bestResult ? `<div class="stat-card highlight">
+              <span class="stat-icon">⭐</span>
+              <span class="stat-label">Best performance</span>
+              <span class="stat-value">${bestResult.icon} ${bestResult.festival}</span>
+              <span class="stat-sub">${fmt(bestResult.score)} pts · S${bestResult.season}</span>
+            </div>` : ""}
+            ${worstResult ? `<div class="stat-card">
+              <span class="stat-icon">📉</span>
+              <span class="stat-label">Toughest festival</span>
+              <span class="stat-value">${worstResult.icon} ${worstResult.festival}</span>
+              <span class="stat-sub">${fmt(worstResult.score)} pts · S${worstResult.season}</span>
+            </div>` : ""}
+            ${bestMember ? `<div class="stat-card highlight">
+              <span class="stat-icon">🌟</span>
+              <span class="stat-label">Strongest role</span>
+              <span class="stat-value">${bestMember.name}</span>
+              <span class="stat-sub">${bestMember.role} · Rating ${bestMember.rating}</span>
+            </div>` : ""}
+            ${game.seasonScores.length ? `<div class="stat-card">
+              <span class="stat-icon">📅</span>
+              <span class="stat-label">Best season</span>
+              <span class="stat-value">Season ${bestSeasonIdx + 1}</span>
+              <span class="stat-sub">${fmt(game.seasonScores[bestSeasonIdx])} pts</span>
+            </div>` : ""}
+            ${neverWon.length && neverWon.length < FESTIVALS.length ? `<div class="stat-card bad">
+              <span class="stat-icon">💔</span>
+              <span class="stat-label">Never won</span>
+              <span class="stat-value">${neverWon.map(f => f.icon + " " + f.name).join(", ")}</span>
+            </div>` : ""}
+          </div>
+          ${game.seasonScores.length ? `
+          <div class="season-scores-bar">
+            <h4>Points per season</h4>
+            <div class="ssb-bars">
+              ${game.seasonScores.map((s, i) => {
+                const max = Math.max(...game.seasonScores);
+                const pct = max ? Math.round((s / max) * 100) : 0;
+                return `<div class="ssb-item">
+                  <span class="ssb-label">S${i+1}</span>
+                  <div class="ssb-track"><div class="ssb-fill" style="width:${pct}%"></div></div>
+                  <span class="ssb-val">${fmt(s)}</span>
+                </div>`;
+              }).join("")}
+            </div>
+          </div>` : ""}
+        </div>`;
+      })()}
 
       ${
         tallyRows.length
