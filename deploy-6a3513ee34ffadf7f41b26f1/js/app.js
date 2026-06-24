@@ -1658,6 +1658,9 @@ function renderGameOver() {
   const missing = FESTIVALS.filter((f) => !game.conquered.has(f.key));
   const grandSlam = missing.length === 0;
 
+  // Grand Slam bonus: +1000 punti sul punteggio finale
+  const finalScore = grandSlam ? game.grandTotal + 1000 : game.grandTotal;
+
   // Tally every festival win across all seasons, grouped and counted, sorted
   // by number of wins descending (e.g. "Venice × 3").
   const winTally = {};
@@ -1721,7 +1724,8 @@ function renderGameOver() {
             <div class="stat-card">
               <span class="stat-icon">🎯</span>
               <span class="stat-label">Total score</span>
-              <span class="stat-value">${fmt(game.grandTotal)}</span>
+              <span class="stat-value">${fmt(finalScore)}</span>
+              ${grandSlam ? `<span class="stat-sub">incl. Grand Slam +1000 bonus</span>` : ""}
             </div>
             <div class="stat-card">
               <span class="stat-icon">📈</span>
@@ -1841,7 +1845,7 @@ function renderGameOver() {
             placeholder="Your name..." value="${game.playerName !== "Anonymous" ? game.playerName : ""}" />
           <button class="btn btn-primary" id="submitScoreBtn">Submit score</button>
         </div>
-        <p class="lb-submit-note muted small">Score: <b>${fmt(game.grandTotal)}</b> · Festivals won: <b>${game.results.filter(r=>r.won).length}</b>${grandSlam ? " · 🏆 Grand Slam" : ""}</p>
+        <p class="lb-submit-note muted small">Score: <b>${fmt(finalScore)}</b>${grandSlam ? ` <span class="slam-bonus">(${fmt(game.grandTotal)} + 1000 Grand Slam bonus 🏆)</span>` : ""} · Festivals won: <b>${game.results.filter(r=>r.won).length}</b>${grandSlam ? " · 🏆 Grand Slam" : ""}</p>
         <div id="lbResult"></div>
         <button class="btn btn-ghost" id="viewLeaderboard">View global top 15 →</button>
       </div>
@@ -1866,7 +1870,7 @@ function renderGameOver() {
     btn.disabled = true;
     btn.textContent = "Submitting…";
     submitAttempts++;
-    const ok = await submitScore(name, game.grandTotal, game.results.filter(r=>r.won).length, grandSlam);
+    const ok = await submitScore(name, finalScore, game.results.filter(r=>r.won).length, grandSlam);
     if (ok) {
       result.innerHTML = `<p class="lb-ok">✅ Score submitted! Good luck in the rankings.</p>`;
       btn.textContent = "Submitted ✓";
