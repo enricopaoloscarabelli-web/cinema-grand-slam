@@ -386,7 +386,11 @@ function hasSave() {
 }
 
 function deleteSave() {
-  try { localStorage.removeItem(SAVE_KEY); } catch (_) {}
+  try {
+    localStorage.removeItem(SAVE_KEY);
+    // Cancella anche eventuali chiavi submit precedenti
+    Object.keys(localStorage).filter(k => k.startsWith("cgs_submitted_")).forEach(k => localStorage.removeItem(k));
+  } catch (_) {}
 }
 
 function loadGame() {
@@ -1860,11 +1864,19 @@ function renderGameOver() {
   }
 
   // Leaderboard submit
+  const SUBMIT_KEY = "cgs_submitted_" + game.grandTotal;
+  const alreadySubmitted = !!localStorage.getItem(SUBMIT_KEY);
   let submitAttempts = 0;
+  const submitBtn = view.querySelector("#submitScoreBtn");
+  const submitName = view.querySelector("#submitName");
+  if (alreadySubmitted) {
+    submitBtn.disabled = true;
+    submitBtn.textContent = "Already submitted ✓";
+    submitName.disabled = true;
+  }
   view.querySelector("#submitScoreBtn").addEventListener("click", async () => {
-    if (submitAttempts >= 3) return; // max 3 tentativi totali
-    const nameInput = view.querySelector("#submitName");
-    const name = nameInput.value.trim() || "Anonymous";
+    if (submitAttempts >= 3 || alreadySubmitted) return;
+    const name = submitName.value.trim() || "Anonymous";
     const btn = view.querySelector("#submitScoreBtn");
     const result = view.querySelector("#lbResult");
     btn.disabled = true;
@@ -1872,10 +1884,11 @@ function renderGameOver() {
     submitAttempts++;
     const ok = await submitScore(name, finalScore, game.results.filter(r=>r.won).length, grandSlam);
     if (ok) {
+      localStorage.setItem(SUBMIT_KEY, "1");
       result.innerHTML = `<p class="lb-ok">✅ Score submitted! Good luck in the rankings.</p>`;
       btn.textContent = "Submitted ✓";
-      btn.disabled = true; // permanentemente disabilitato dopo successo
-      nameInput.disabled = true;
+      btn.disabled = true;
+      submitName.disabled = true;
     } else {
       result.innerHTML = `<p class="lb-err">❌ Submission failed — check your connection.${submitAttempts >= 3 ? " No more attempts." : ""}</p>`;
       if (submitAttempts < 3) {
