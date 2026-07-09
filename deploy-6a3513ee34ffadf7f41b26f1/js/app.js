@@ -386,9 +386,11 @@ function hasSave() {
 }
 
 function deleteSave() {
+  try { localStorage.removeItem(SAVE_KEY); } catch (_) {}
+}
+
+function deleteSubmitKeys() {
   try {
-    localStorage.removeItem(SAVE_KEY);
-    // Cancella anche eventuali chiavi submit precedenti
     Object.keys(localStorage).filter(k => k.startsWith("cgs_submitted_")).forEach(k => localStorage.removeItem(k));
   } catch (_) {}
 }
@@ -630,6 +632,7 @@ function renderIntro() {
     const nameInput = view.querySelector("#playerNameInput");
     game.playerName = nameInput && nameInput.value.trim() ? nameInput.value.trim() : "Anonymous";
     deleteSave();
+    deleteSubmitKeys();
     startDraftTurn();
   });
   const resumeBtn = view.querySelector("#resume");
@@ -1857,7 +1860,7 @@ function renderGameOver() {
     </section>
   `);
   wireShareButtons(view, tallyRows, grandSlam);
-  view.querySelector("#restart").addEventListener("click", () => { deleteSave(); location.reload(); });
+  view.querySelector("#restart").addEventListener("click", () => { deleteSave(); deleteSubmitKeys(); location.reload(); });
   if (grandSlam) {
     view.querySelector("#faceGoat").addEventListener("click", renderGoatIntro);
     setTimeout(() => launchConfetti("slam"), 500);
@@ -2276,7 +2279,7 @@ function renderGoatResult(playerWins, goatWins) {
       <button class="btn btn-primary btn-xl" id="restart">↺ Play again</button>
     </section>
   `);
-  view.querySelector("#restart").addEventListener("click", () => { deleteSave(); location.reload(); });
+  view.querySelector("#restart").addEventListener("click", () => { deleteSave(); deleteSubmitKeys(); location.reload(); });
   root().appendChild(view);
   if (won) setTimeout(() => launchConfetti("goat"), 400);
 }
