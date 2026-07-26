@@ -454,6 +454,18 @@ function loadGame() {
     return true;
   } catch (_) { return false; }
 }
+// Reads just the difficulty flags out of the saved career, WITHOUT touching
+// the live `game` object. Used purely to render the mode-select UI in a
+// locked/read-only state that reflects the save — never to drive gameplay.
+function peekSavedDifficulty() {
+  try {
+    const raw = localStorage.getItem(SAVE_KEY);
+    if (!raw) return null;
+    const data = JSON.parse(raw);
+    return { isEasyMode: !!data.isEasyMode, isExpertMode: !!data.isExpertMode };
+  } catch (_) { return null; }
+}
+
 function ratingsHidden() {
   return game.isExpertMode && (game.mode === "draft" || game.mode === "transfer");
 }
@@ -623,6 +635,7 @@ function effectChipsHTML(effect) {
 // ───────────────────────────────────────────────────────────────────────────
 function renderIntro() {
   root().innerHTML = "";
+  const savedDifficulty = peekSavedDifficulty();
   const view = el(`
     <section class="screen intro">
       <div class="intro-glow"></div>
@@ -640,16 +653,17 @@ function renderIntro() {
       <button class="btn btn-primary btn-xl" id="begin">🎬 Begin Career</button>
       ${hasSave() ? `<button class="btn btn-resume btn-xl" id="resume">▶ Continue saved career</button>` : ""}
       <button class="btn btn-ghost" id="showLeaderboard">🏆 Global Leaderboard</button>
-      <div class="mode-select" id="modeSelect" role="group" aria-label="Game mode">
-        <button class="mode-btn" data-mode="easy">
+      ${savedDifficulty ? `<p class="mode-locked-note">🔒 A saved career is in progress in <b>${savedDifficulty.isEasyMode ? "Cinema for dummies" : savedDifficulty.isExpertMode ? "Cinema master" : "Cinema expert"}</b> mode. Difficulty can't be changed mid-career — resuming will always continue in that mode. Start a new career below to pick a different one (this erases the saved career).</p>` : ""}
+      <div class="mode-select ${savedDifficulty ? "locked" : ""}" id="modeSelect" role="group" aria-label="Game mode">
+        <button class="mode-btn" data-mode="easy" ${savedDifficulty ? "disabled" : ""}>
           <span class="mode-name">🍿 Cinema for dummies (Nolan fan)</span>
           <span class="mode-desc">Unlimited redraws. Stronger bonuses. For beginners.</span>
         </button>
-        <button class="mode-btn" data-mode="normal">
+        <button class="mode-btn" data-mode="normal" ${savedDifficulty ? "disabled" : ""}>
           <span class="mode-name">🎟️ Cinema expert (Kiarostami fan)</span>
           <span class="mode-desc">Ratings &amp; bonuses always visible. One redraw.</span>
         </button>
-        <button class="mode-btn" data-mode="expert">
+        <button class="mode-btn" data-mode="expert" ${savedDifficulty ? "disabled" : ""}>
           <span class="mode-name">🕶️ Cinema master (The Emperor's New Groove fan)</span>
           <span class="mode-desc">Ratings &amp; bonuses hidden until your crew is complete.</span>
         </button>
@@ -661,6 +675,7 @@ function renderIntro() {
     </section>
   `);
   view.querySelector("#begin").addEventListener("click", () => {
+    if (savedDifficulty && !confirm("Starting a new career will erase your saved career in progress. Continue?")) return;
     const nameInput = view.querySelector("#playerNameInput");
     game.playerName = nameInput && nameInput.value.trim() ? nameInput.value.trim() : "Anonymous";
     deleteSave();
@@ -673,6 +688,8 @@ function renderIntro() {
     resumeBtn.addEventListener("click", () => {
       const nameInput = view.querySelector("#playerNameInput");
       if (nameInput && nameInput.value.trim()) game.playerName = nameInput.value.trim();
+      // loadGame() restores crew and difficulty together, straight from the
+      // save — the (disabled) mode-select above can never influence this.
       if (loadGame()) {
         renderRoadmap();
         resumeFromSave();
@@ -684,20 +701,29 @@ function renderIntro() {
   const syncMode = () => {
     modeSelect.querySelectorAll(".mode-btn").forEach((btn) => {
       const m = btn.dataset.mode;
-      const active =
-        (m === "easy" && game.isEasyMode) ||
-        (m === "expert" && game.isExpertMode) ||
-        (m === "normal" && !game.isEasyMode && !game.isExpertMode);
+      const active = savedDifficulty
+        ? (m === "easy" && savedDifficulty.isEasyMode) ||
+          (m === "expert" && savedDifficulty.isExpertMode) ||
+          (m === "normal" && !savedDifficulty.isEasyMode && !savedDifficulty.isExpertMode)
+        : (m === "easy" && game.isEasyMode) ||
+          (m === "expert" && game.isExpertMode) ||
+          (m === "normal" && !game.isEasyMode && !game.isExpertMode);
       btn.classList.toggle("active", active);
     });
   };
-  modeSelect.querySelectorAll(".mode-btn").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      game.isEasyMode   = btn.dataset.mode === "easy";
-      game.isExpertMode = btn.dataset.mode === "expert";
-      syncMode();
+  // While a saved career exists, the mode buttons are disabled (see markup
+  // above) and reflect ONLY the save's difficulty — they cannot be clicked
+  // to change it. This is what guarantees "Continue saved career" always
+  // resumes in the exact difficulty the crew was drafted under.
+  if (!savedDifficulty) {
+    modeSelect.querySelectorAll(".mode-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        game.isEasyMode   = btn.dataset.mode === "easy";
+        game.isExpertMode = btn.dataset.mode === "expert";
+        syncMode();
+      });
     });
-  });
+  }
   syncMode();
   root().appendChild(view);
 }
