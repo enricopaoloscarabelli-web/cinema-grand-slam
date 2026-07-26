@@ -1348,20 +1348,6 @@ body {
   background: var(--panel-2);
   box-shadow: 0 0 0 1px var(--gold) inset;
 }
-.mode-select.locked .mode-btn {
-  cursor: not-allowed;
-  opacity: 0.45;
-  filter: grayscale(0.4);
-}
-.mode-select.locked .mode-btn:hover {
-  transform: none;
-  border-color: var(--line);
-}
-.mode-select.locked .mode-btn.active {
-  opacity: 1;
-  filter: none;
-  border-color: var(--gold);
-}
 .mode-btn .mode-name {
   font-weight: 700;
   font-size: 1rem;
@@ -2441,25 +2427,6 @@ body {
 
 .mode-btn.active::before {
   opacity: 1;
-}
-
-.mode-select.locked .mode-btn {
-  cursor: not-allowed;
-  opacity: 0.45;
-  filter: grayscale(0.4);
-}
-
-.mode-select.locked .mode-btn:hover {
-  transform: none;
-  border-color: var(--line);
-  background: var(--panel);
-}
-
-.mode-select.locked .mode-btn.active {
-  opacity: 1;
-  filter: none;
-  border-color: var(--gold);
-  background: rgba(231, 198, 107, 0.1);
 }
 
 .mode-name {
