@@ -165,6 +165,46 @@ export const GOAT_FESTIVAL = {
   },
 };
 
+// Human-readable label + icon for every scoring component (7 crafts + 6
+// cultural bonuses). Used by the post-festival recap to explain exactly
+// what mattered, in the player's own words rather than raw keys.
+export const COMPONENT_INFO = {
+  directing:      { label: "Directing",        icon: "🎬" },
+  acting:         { label: "Acting",            icon: "🎭" },
+  screenplay:     { label: "Screenplay",        icon: "✍️" },
+  cinematography: { label: "Cinematography",    icon: "🎥" },
+  music:          { label: "Score",             icon: "🎵" },
+  star:           { label: "STAR power",        icon: "🌟" },
+  drama:          { label: "Drama",             icon: "💔" },
+  political:      { label: "Political bonus",   icon: "✊" },
+  avantgarde:     { label: "Avant-garde bonus", icon: "🧪" },
+  hipster:        { label: "Hipster bonus",     icon: "🧣" },
+  starsystem:     { label: "Star System bonus", icon: "💎" },
+  auteur:         { label: "Auteur bonus",      icon: "🖋️" },
+  social:         { label: "Social bonus",      icon: "📣" },
+};
+
+// Per-component contribution breakdown for ONE festival, on the exact same
+// displayed x10 scale as scoreBreakdown's `total` (so the rows sum to the
+// same total scoreBreakdown() would report). This is what the post-festival
+// recap uses to show "here's exactly what won (or lost) it for you".
+// Returns rows sorted by contribution, largest first, one per component the
+// festival actually weighs (components with a 0 weight are omitted).
+export function componentContributions(team, festival, easyMode = false) {
+  const comp = components(team, easyMode);
+  const w = festival.weights;
+  let weightTotal = 0;
+  for (const key of Object.keys(w)) weightTotal += w[key];
+  const rows = Object.keys(w).map((key) => {
+    const raw = comp[key] || 0;
+    const weight = w[key];
+    const points = weightTotal ? (weight * raw * 10) / weightTotal : 0;
+    return { key, ...COMPONENT_INFO[key], raw, weight, points };
+  });
+  rows.sort((a, b) => b.points - a.points);
+  return rows;
+}
+
 function avg(team, roles) {
   const vals = roles.map((r) => (team[r] ? team[r].rating : 0));
   const present = vals.filter((v) => v > 0);
