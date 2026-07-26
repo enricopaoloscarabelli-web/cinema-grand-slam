@@ -18,6 +18,7 @@ import {
   GOAT_FESTIVAL,
 } from "./festivals.js";
 import { rollEvent, eventDelta } from "./events.js";
+import { startVsMode } from "./vs.js";
 import { DECISIONS } from "./decisions.js";
 
 // ── SUPABASE LEADERBOARD ──────────────────────────────────────────────────
@@ -661,6 +662,7 @@ function renderIntro() {
       <button class="btn btn-primary btn-xl" id="begin">🎬 Begin Career</button>
       ${hasSave() ? `<button class="btn btn-resume btn-xl" id="resume">▶ Continue saved career</button>` : ""}
       <button class="btn btn-ghost" id="showLeaderboard">🏆 Global Leaderboard</button>
+      <button class="btn btn-ghost" id="startVs">⚔️ 1vs1 Local (same device)</button>
       ${savedDifficulty ? `<p class="mode-locked-note">🔒 A saved career is in progress in <b>${savedDifficulty.isEasyMode ? "Cinema for dummies" : savedDifficulty.isExpertMode ? "Cinema master" : "Cinema expert"}</b> mode. Resuming will continue in that mode. Picking a different mode below starts a brand-new career from scratch and erases the saved one.</p>` : ""}
       <div class="mode-select" id="modeSelect" role="group" aria-label="Game mode">
         <button class="mode-btn" data-mode="easy">
@@ -707,6 +709,7 @@ function renderIntro() {
     });
   }
   view.querySelector("#showLeaderboard").addEventListener("click", () => renderLeaderboardScreen());
+  view.querySelector("#startVs").addEventListener("click", () => startVsMode(() => renderIntro()));
   const modeSelect = view.querySelector("#modeSelect");
   const syncMode = () => {
     modeSelect.querySelectorAll(".mode-btn").forEach((btn) => {
