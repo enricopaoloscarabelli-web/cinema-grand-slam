@@ -23,7 +23,7 @@
 // ─────────────────────────────────────────────────────────────────────────
 
 import { ROLES, ROSTERS, BONUS_LABELS } from "./data.js";
-import { FESTIVALS, ACTS, scoreBreakdown, teamAverage, bonusTags } from "./festivals.js";
+import { FESTIVALS, ACTS, scoreBreakdown, teamAverage, bonusTags, componentContributions } from "./festivals.js";
 import { rollEvent, eventDelta } from "./events.js";
 import { DECISIONS } from "./decisions.js";
 
@@ -750,6 +750,28 @@ async function vsRunFestival(fest, onExit) {
   vsFinishFestival(fest, teams, onExit);
 }
 
+function vsScoreRecapHTML(team, fest, label) {
+  const rows = componentContributions(team, fest, false);
+  const maxPts = Math.max(0.001, ...rows.map((r) => r.points));
+  return `
+    <div class="score-recap">
+      <h3>${label} — what mattered at ${fest.name}</h3>
+      <div class="recap-rows">
+        ${rows
+          .map(
+            (r) => `
+          <div class="recap-row">
+            <span class="recap-ic">${r.icon}</span>
+            <span class="recap-label">${r.label}</span>
+            <div class="recap-bar-track"><div class="recap-bar-fill" style="width:${(r.points / maxPts) * 100}%"></div></div>
+            <span class="recap-pts">${r.points.toFixed(1)}</span>
+          </div>`
+          )
+          .join("")}
+      </div>
+    </div>`;
+}
+
 function vsFinishFestival(fest, teams, onExit) {
   const ranked = [...teams].sort((a, b) => b.score - a.score);
   const winner = ranked[0];
@@ -783,6 +805,10 @@ function vsFinishFestival(fest, teams, onExit) {
           )
           .join("")}
       </ol>
+      <div class="vs-split">
+        ${vsScoreRecapHTML(vs.p1.crew, fest, `🅰️ ${vs.p1.name}`)}
+        ${vsScoreRecapHTML(vs.p2.crew, fest, `🅱️ ${vs.p2.name}`)}
+      </div>
       <button class="btn btn-primary btn-xl" id="vsContinue">Continue ▸</button>
     </section>
   `);
