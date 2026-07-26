@@ -2683,3 +2683,70 @@ body {
 .lb-score-cell { font-family: var(--serif); font-weight: 700; color: var(--gold); }
 .lb-wins-cell { color: var(--muted); }
 .lb-slam-cell { font-size: 0.78rem; color: var(--gold); font-weight: 600; }
+
+/* ─────────────────────────────────────────────────────────────────────────
+   1vs1 LOCAL mode (vs.js)
+   ───────────────────────────────────────────────────────────────────────── */
+.vs-topbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.vs-kicker {
+  color: var(--muted);
+  font-size: 0.8rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.vs-turn-banner {
+  color: var(--gold-2);
+  font-weight: 600;
+}
+
+/* Two-column layout used for the draft crew strips, the "crews complete"
+   recap, and the final result cards. Stacks on narrow screens. */
+.vs-split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin: 20px 0;
+}
+@media (max-width: 760px) {
+  .vs-split {
+    grid-template-columns: 1fr;
+  }
+}
+
+.vs-crew-col-title {
+  color: var(--ink);
+  font-size: 0.95rem;
+  margin: 0 0 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--line);
+}
+.vs-crew-strip {
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+}
+
+.vs-pick-banner {
+  margin: 10px 0;
+  font-size: 0.95rem;
+  color: var(--ink);
+}
+.vs-pick-banner b {
+  color: var(--gold-2);
+}
+
+.vs-final-card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  padding: 18px 20px;
+  text-align: center;
+}
+.vs-final-card h3 {
+  margin: 0 0 12px;
+  color: var(--ink);
+}
