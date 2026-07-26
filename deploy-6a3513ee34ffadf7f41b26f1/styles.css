@@ -1286,6 +1286,24 @@ body {
   font-size: 0.9em;
 }
 
+/* ── Locked mode-select note (intro screen, save in progress) ──────────────── */
+.mode-locked-note {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--gold);
+  border-radius: var(--r);
+  padding: 12px 16px;
+  margin: 14px auto 0;
+  max-width: 560px;
+  color: var(--muted);
+  font-size: 0.85rem;
+  line-height: 1.55;
+  text-align: center;
+}
+.mode-locked-note b {
+  color: var(--gold-2);
+}
+
 /* ── humorous draft disclaimer (low-emphasis easter egg) ───────────────────── */
 .draft-disclaimer {
   text-align: center;
@@ -1329,6 +1347,20 @@ body {
   border-color: var(--gold);
   background: var(--panel-2);
   box-shadow: 0 0 0 1px var(--gold) inset;
+}
+.mode-select.locked .mode-btn {
+  cursor: not-allowed;
+  opacity: 0.45;
+  filter: grayscale(0.4);
+}
+.mode-select.locked .mode-btn:hover {
+  transform: none;
+  border-color: var(--line);
+}
+.mode-select.locked .mode-btn.active {
+  opacity: 1;
+  filter: none;
+  border-color: var(--gold);
 }
 .mode-btn .mode-name {
   font-weight: 700;
@@ -2409,6 +2441,25 @@ body {
 
 .mode-btn.active::before {
   opacity: 1;
+}
+
+.mode-select.locked .mode-btn {
+  cursor: not-allowed;
+  opacity: 0.45;
+  filter: grayscale(0.4);
+}
+
+.mode-select.locked .mode-btn:hover {
+  transform: none;
+  border-color: var(--line);
+  background: var(--panel);
+}
+
+.mode-select.locked .mode-btn.active {
+  opacity: 1;
+  filter: none;
+  border-color: var(--gold);
+  background: rgba(231, 198, 107, 0.1);
 }
 
 .mode-name {
