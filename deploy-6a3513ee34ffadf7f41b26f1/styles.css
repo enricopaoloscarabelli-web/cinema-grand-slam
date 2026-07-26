@@ -2750,3 +2750,65 @@ body {
   margin: 0 0 12px;
   color: var(--ink);
 }
+
+/* ── Post-festival recap: "what mattered tonight" component breakdown ────── */
+.score-recap {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  padding: 18px 20px;
+  margin: 20px 0;
+}
+.score-recap h3 {
+  margin: 0 0 4px;
+  color: var(--ink);
+  font-size: 1.05rem;
+}
+.score-recap > p {
+  margin: 0 0 14px;
+}
+.recap-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.recap-row {
+  display: grid;
+  grid-template-columns: 22px 150px 1fr 48px;
+  align-items: center;
+  gap: 10px;
+}
+.recap-ic {
+  font-size: 1rem;
+  text-align: center;
+}
+.recap-label {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+.recap-bar-track {
+  height: 8px;
+  background: var(--panel-2);
+  border-radius: 5px;
+  overflow: hidden;
+}
+.recap-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--gold), var(--gold-2));
+  border-radius: 5px;
+}
+.recap-pts {
+  font-family: var(--serif);
+  font-weight: 700;
+  color: var(--gold-2);
+  text-align: right;
+  font-size: 0.9rem;
+}
+@media (max-width: 560px) {
+  .recap-row {
+    grid-template-columns: 18px 100px 1fr 40px;
+  }
+  .recap-label {
+    font-size: 0.75rem;
+  }
+}
