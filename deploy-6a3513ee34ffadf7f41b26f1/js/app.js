@@ -635,7 +635,15 @@ function effectChipsHTML(effect) {
 // ───────────────────────────────────────────────────────────────────────────
 function renderIntro() {
   root().innerHTML = "";
-  const savedDifficulty = peekSavedDifficulty();
+  let savedDifficulty = peekSavedDifficulty();
+  if (savedDifficulty) {
+    // Keep the visible "active" mode button truthful: as long as a save
+    // exists, it must reflect what Resume will actually do, regardless of
+    // whatever the live game object was left at (e.g. after the home
+    // button, which never touches it).
+    game.isEasyMode = savedDifficulty.isEasyMode;
+    game.isExpertMode = savedDifficulty.isExpertMode;
+  }
   const view = el(`
     <section class="screen intro">
       <div class="intro-glow"></div>
@@ -653,17 +661,17 @@ function renderIntro() {
       <button class="btn btn-primary btn-xl" id="begin">🎬 Begin Career</button>
       ${hasSave() ? `<button class="btn btn-resume btn-xl" id="resume">▶ Continue saved career</button>` : ""}
       <button class="btn btn-ghost" id="showLeaderboard">🏆 Global Leaderboard</button>
-      ${savedDifficulty ? `<p class="mode-locked-note">🔒 A saved career is in progress in <b>${savedDifficulty.isEasyMode ? "Cinema for dummies" : savedDifficulty.isExpertMode ? "Cinema master" : "Cinema expert"}</b> mode. Difficulty can't be changed mid-career — resuming will always continue in that mode. Start a new career below to pick a different one (this erases the saved career).</p>` : ""}
-      <div class="mode-select ${savedDifficulty ? "locked" : ""}" id="modeSelect" role="group" aria-label="Game mode">
-        <button class="mode-btn" data-mode="easy" ${savedDifficulty ? "disabled" : ""}>
+      ${savedDifficulty ? `<p class="mode-locked-note">🔒 A saved career is in progress in <b>${savedDifficulty.isEasyMode ? "Cinema for dummies" : savedDifficulty.isExpertMode ? "Cinema master" : "Cinema expert"}</b> mode. Resuming will continue in that mode. Picking a different mode below starts a brand-new career from scratch and erases the saved one.</p>` : ""}
+      <div class="mode-select" id="modeSelect" role="group" aria-label="Game mode">
+        <button class="mode-btn" data-mode="easy">
           <span class="mode-name">🍿 Cinema for dummies (Nolan fan)</span>
           <span class="mode-desc">Unlimited redraws. Stronger bonuses. For beginners.</span>
         </button>
-        <button class="mode-btn" data-mode="normal" ${savedDifficulty ? "disabled" : ""}>
+        <button class="mode-btn" data-mode="normal">
           <span class="mode-name">🎟️ Cinema expert (Kiarostami fan)</span>
           <span class="mode-desc">Ratings &amp; bonuses always visible. One redraw.</span>
         </button>
-        <button class="mode-btn" data-mode="expert" ${savedDifficulty ? "disabled" : ""}>
+        <button class="mode-btn" data-mode="expert">
           <span class="mode-name">🕶️ Cinema master (The Emperor's New Groove fan)</span>
           <span class="mode-desc">Ratings &amp; bonuses hidden until your crew is complete.</span>
         </button>
@@ -689,7 +697,9 @@ function renderIntro() {
       const nameInput = view.querySelector("#playerNameInput");
       if (nameInput && nameInput.value.trim()) game.playerName = nameInput.value.trim();
       // loadGame() restores crew and difficulty together, straight from the
-      // save — the (disabled) mode-select above can never influence this.
+      // save — whatever the mode buttons above were last clicked to, this
+      // always wins, because Resume never reaches this point if a mode
+      // switch was confirmed (that path deletes the save and re-renders).
       if (loadGame()) {
         renderRoadmap();
         resumeFromSave();
@@ -701,29 +711,35 @@ function renderIntro() {
   const syncMode = () => {
     modeSelect.querySelectorAll(".mode-btn").forEach((btn) => {
       const m = btn.dataset.mode;
-      const active = savedDifficulty
-        ? (m === "easy" && savedDifficulty.isEasyMode) ||
-          (m === "expert" && savedDifficulty.isExpertMode) ||
-          (m === "normal" && !savedDifficulty.isEasyMode && !savedDifficulty.isExpertMode)
-        : (m === "easy" && game.isEasyMode) ||
-          (m === "expert" && game.isExpertMode) ||
-          (m === "normal" && !game.isEasyMode && !game.isExpertMode);
+      const active =
+        (m === "easy" && game.isEasyMode) ||
+        (m === "expert" && game.isExpertMode) ||
+        (m === "normal" && !game.isEasyMode && !game.isExpertMode);
       btn.classList.toggle("active", active);
     });
   };
-  // While a saved career exists, the mode buttons are disabled (see markup
-  // above) and reflect ONLY the save's difficulty — they cannot be clicked
-  // to change it. This is what guarantees "Continue saved career" always
-  // resumes in the exact difficulty the crew was drafted under.
-  if (!savedDifficulty) {
-    modeSelect.querySelectorAll(".mode-btn").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        game.isEasyMode   = btn.dataset.mode === "easy";
-        game.isExpertMode = btn.dataset.mode === "expert";
-        syncMode();
-      });
+  modeSelect.querySelectorAll(".mode-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const clickedEasy = btn.dataset.mode === "easy";
+      const clickedExpert = btn.dataset.mode === "expert";
+      const switchesDifficulty =
+        savedDifficulty &&
+        (clickedEasy !== savedDifficulty.isEasyMode || clickedExpert !== savedDifficulty.isExpertMode);
+      if (switchesDifficulty) {
+        if (!confirm("Choosing a different difficulty starts a brand-new career and erases your saved one. Continue?")) return;
+        deleteSave();
+        deleteSubmitKeys();
+        resetGameState();
+        game.isEasyMode = clickedEasy;
+        game.isExpertMode = clickedExpert;
+        renderIntro(); // re-render: save is gone, screen comes back fully unlocked
+        return;
+      }
+      game.isEasyMode = clickedEasy;
+      game.isExpertMode = clickedExpert;
+      syncMode();
     });
-  }
+  });
   syncMode();
   root().appendChild(view);
 }
