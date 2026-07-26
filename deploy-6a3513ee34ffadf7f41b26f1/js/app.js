@@ -346,6 +346,38 @@ const game = {
   _scoredKeys: new Set(), // anti-cheat: "S1-cannes" etc. — never score twice
 };
 
+// Resets every mutable piece of run state back to its initial value, while
+// preserving the player's name and the difficulty they just picked on the
+// intro screen. MUST be called before starting a brand-new career — without
+// it, `game.crew` (and everything else) still holds whatever was drafted in
+// a previous session, even after deleteSave(), because deleteSave() only
+// clears localStorage and never touches the live `game` object in memory.
+function resetGameState() {
+  game.crew = {};
+  game.pickedNames = new Set();
+  game.currentRoster = null;
+  game.redrawsLeft = 1;
+  game.drawnThisTurn = false;
+  game.usedRosterIds = new Set();
+  game.started = false;
+  game.season = 1;
+  game.grandTotal = 0;
+  game.seasonScores = [];
+  game.results = [];
+  game.conquered = new Set();
+  game.transfersLeft = 0;
+  game.mode = "draft";
+  game.festRivals = [];
+  game._seasonUsedRivalIds = new Set();
+  game.festivalRep = Object.fromEntries(FESTIVALS.map((f) => [f.key, 0]));
+  game.usedDecisions = new Set();
+  game._festivalIndex = 0;
+  game._seasonScore = 0;
+  game._scoredKeys = new Set();
+  // isExpertMode / isEasyMode / playerName are intentionally left untouched —
+  // they reflect the choice the player just made on the intro screen.
+}
+
 // ── SAVE / LOAD (localStorage) ───────────────────────────────────────────
 // Serialises the mutable game state to JSON and stores it under a fixed key.
 // Sets containing strings (pickedNames, usedRosterIds, conquered, etc.) are
@@ -633,6 +665,7 @@ function renderIntro() {
     game.playerName = nameInput && nameInput.value.trim() ? nameInput.value.trim() : "Anonymous";
     deleteSave();
     deleteSubmitKeys();
+    resetGameState();
     startDraftTurn();
   });
   const resumeBtn = view.querySelector("#resume");
