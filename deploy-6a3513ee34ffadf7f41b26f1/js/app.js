@@ -15,6 +15,7 @@ import {
   scoreBreakdown,
   teamAverage,
   bonusTags,
+  componentContributions,
   GOAT_FESTIVAL,
 } from "./festivals.js";
 import { rollEvent, eventDelta } from "./events.js";
@@ -1510,6 +1511,34 @@ async function runFestival(fest) {
   finishFestival(fest, teams, highlights);
 }
 
+// ── post-festival recap: "what actually mattered tonight" ──────────────────
+// Shows a bar for every scoring component this festival weighs, ranked by
+// how many of the displayed points it actually contributed — so the player
+// can see, in their own crew's numbers, exactly what won (or lost) it for
+// them, instead of just a final score.
+function scoreRecapHTML(team, fest, easyMode) {
+  const rows = componentContributions(team, fest, easyMode);
+  const maxPts = Math.max(0.001, ...rows.map((r) => r.points));
+  return `
+    <div class="score-recap">
+      <h3>What mattered at ${fest.name}</h3>
+      <p class="muted small">How your crew's score broke down tonight — ${fest.name} weighs these components.</p>
+      <div class="recap-rows">
+        ${rows
+          .map(
+            (r) => `
+          <div class="recap-row">
+            <span class="recap-ic">${r.icon}</span>
+            <span class="recap-label">${r.label}</span>
+            <div class="recap-bar-track"><div class="recap-bar-fill" style="width:${(r.points / maxPts) * 100}%"></div></div>
+            <span class="recap-pts">${r.points.toFixed(1)}</span>
+          </div>`
+          )
+          .join("")}
+      </div>
+    </div>`;
+}
+
 function finishFestival(fest, teams, highlights) {
   const ranked = [...teams].sort((a, b) => b.score - a.score);
   const playerRank = ranked.findIndex((t) => t.isPlayer) + 1;
@@ -1582,6 +1611,8 @@ function finishFestival(fest, teams, highlights) {
           )
           .join("")}
       </ol>
+
+      ${scoreRecapHTML(game.crew, fest, game.isEasyMode)}
 
       ${
         highlights.length
