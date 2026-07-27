@@ -506,7 +506,7 @@ body {
 .crew-strip {
   margin-top: 26px;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(142px, 1fr));
   gap: 8px;
 }
 .crew-slot {
@@ -518,6 +518,7 @@ body {
   flex-direction: column;
   gap: 4px;
   min-height: 58px;
+  transition: transform 0.15s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
 .crew-slot.empty {
   border-style: dashed;
@@ -525,6 +526,18 @@ body {
 }
 .crew-slot.filled {
   border-color: rgba(231, 198, 107, 0.4);
+  box-shadow: 0 0 0 1px rgba(231, 198, 107, 0.08) inset, 0 6px 16px rgba(0, 0, 0, 0.25);
+  animation: slotPop 0.35s ease both;
+}
+.crew-slot.filled:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 0 1px rgba(231, 198, 107, 0.16) inset, 0 10px 22px rgba(0, 0, 0, 0.32), 0 0 18px rgba(231, 198, 107, 0.12);
+  border-color: rgba(231, 198, 107, 0.65);
+}
+@keyframes slotPop {
+  0% { opacity: 0; transform: scale(0.92); }
+  60% { opacity: 1; transform: scale(1.02); }
+  100% { opacity: 1; transform: scale(1); }
 }
 .slot-top {
   display: flex;
@@ -535,8 +548,12 @@ body {
 .slot-role {
   font-size: 0.62rem;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.06em;
   color: var(--muted);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .slot-name {
   font-weight: 600;
@@ -2772,43 +2789,236 @@ body {
   flex-direction: column;
   gap: 8px;
 }
-.recap-row {
+.comp-row {
   display: grid;
   grid-template-columns: 22px 150px 1fr 48px;
   align-items: center;
   gap: 10px;
 }
-.recap-ic {
+.comp-ic {
   font-size: 1rem;
   text-align: center;
 }
-.recap-label {
+.comp-label {
   font-size: 0.85rem;
   color: var(--muted);
 }
-.recap-bar-track {
+.comp-bar-track {
   height: 8px;
   background: var(--panel-2);
   border-radius: 5px;
   overflow: hidden;
 }
-.recap-bar-fill {
+.comp-bar-fill {
   height: 100%;
   background: linear-gradient(90deg, var(--gold), var(--gold-2));
   border-radius: 5px;
 }
-.recap-pts {
+.comp-pts {
   font-family: var(--serif);
   font-weight: 700;
   color: var(--gold-2);
   text-align: right;
   font-size: 0.9rem;
 }
+.comp-pct {
+  font-family: var(--sans);
+  font-weight: 500;
+  color: var(--muted);
+  font-size: 0.72rem;
+}
 @media (max-width: 560px) {
-  .recap-row {
+  .comp-row {
     grid-template-columns: 18px 100px 1fr 40px;
   }
-  .recap-label {
+  .comp-label {
     font-size: 0.75rem;
   }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   MOBILE PASS — touch targets, no horizontal overflow, comfortable spacing.
+   Kept as overrides at the end so nothing above needs to change; safe to
+   remove this whole block to revert to the desktop-only layout.
+   ───────────────────────────────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  html, body { overflow-x: hidden; }
+
+  #app {
+    padding: 20px 14px 44px;
+    padding-left: max(14px, env(safe-area-inset-left));
+    padding-right: max(14px, env(safe-area-inset-right));
+  }
+
+  /* Every tappable control gets a real thumb-sized target (Apple/Google's
+     own guidelines land around 44–48px). */
+  .btn { min-height: 46px; }
+  .btn-xl, .btn-lg { width: 100%; }
+  .mode-btn, .decision-choice { min-height: 52px; }
+
+  .lede { font-size: 0.98rem; padding: 0 2px; }
+  .intro-fests { gap: 8px; }
+
+  /* Draft header: title and stat boxes were fighting for the same row —
+     stack them so nothing truncates or wraps mid-word. */
+  .draft-head {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+  .draft-head h2 { font-size: 1.5rem; }
+  .draft-stats { justify-content: space-between; }
+  .draft-stat { text-align: left; }
+
+  /* Crew grids: 3–4 tiny squeezed columns become 2 legible ones. */
+  .crew-grid, .crew-strip, .vs-crew-strip {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  /* Roster pick list: shrink the fixed-width status column so the name
+     never gets pushed into 2–3 broken lines, and make each row a proper
+     tap target. */
+  .member {
+    grid-template-columns: minmax(0, 1fr) auto 58px;
+    padding: 12px 10px;
+    gap: 8px;
+  }
+  .m-status { font-size: 0.7rem; text-align: right; }
+  .m-name { overflow-wrap: anywhere; }
+
+  /* Live festival leaderboard: the old 150px fixed name column overflows
+     any phone narrower than ~360px. Let the name flex and drop the progress
+     bar here — the score number already tells the story at this width. */
+  .lb-row {
+    grid-template-columns: 20px 24px minmax(0, 1fr) 58px;
+    gap: 8px;
+    padding: 8px 10px;
+  }
+  .lb-bar { display: none; }
+  .lb-name {
+    font-size: 0.85rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .lb-score { font-size: 0.9rem; }
+
+  /* Festival lineup: drop the avg-rating column to its own line instead of
+     squeezing a 3rd column next to a long name. */
+  .lineup-row {
+    grid-template-columns: 22px minmax(0, 1fr);
+    row-gap: 4px;
+  }
+  .lu-avg { grid-column: 2; justify-self: start; }
+
+  .fb-row { grid-template-columns: 28px 24px minmax(0, 1fr) auto; gap: 8px; }
+  .fb-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  /* Roadmap trophy bar: wrapping to 2–3 lines while sticky eats the whole
+     top of the screen. A single scrollable row keeps it out of the way. */
+  .roadmap-inner { padding: 10px 14px; }
+  .roadmap-trophies {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 2px;
+  }
+  .rm-trophy { flex-shrink: 0; }
+
+  .vs-topbar {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: var(--bg);
+    margin: -20px -14px 14px;
+    padding: 12px 14px;
+    padding-top: max(12px, env(safe-area-inset-top));
+    border-bottom: 1px solid var(--line);
+  }
+
+  .fest-badge { font-size: 2.5rem; }
+  .act-banner { font-size: 0.85rem; }
+}
+
+@media (max-width: 380px) {
+  .crew-grid, .crew-strip, .vs-crew-strip { grid-template-columns: 1fr !important; }
+  .draft-stats { flex-direction: column; align-items: flex-start; gap: 6px; }
+  .title { font-size: clamp(2.3rem, 11vw, 3.4rem); }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   VISUAL POLISH PASS — subtle depth & consistency across cards, plus a
+   themed scrollbar for the horizontally-scrolling strips. Purely additive;
+   doesn't touch layout, sizing, or any JS-dependent measurements.
+   ───────────────────────────────────────────────────────────────────────── */
+.roster-card,
+.decision-card,
+.score-recap,
+.mvp-card,
+.vs-final-card {
+  transition: box-shadow 0.25s ease, transform 0.2s ease;
+}
+.roster-card:hover,
+.decision-card:hover,
+.score-recap:hover {
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3);
+}
+
+.comp-bar-fill {
+  background: linear-gradient(90deg, var(--gold), var(--gold-2));
+  box-shadow: 0 0 10px rgba(231, 198, 107, 0.35);
+}
+
+.member.pickable,
+.mode-btn,
+.decision-choice {
+  transition: transform 0.15s ease, box-shadow 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+}
+.member.pickable:hover {
+  transform: translateX(2px);
+  box-shadow: -3px 0 0 var(--gold) inset;
+}
+
+/* Themed thin scrollbar for the roadmap trophy strip & live ticker feed. */
+.roadmap-trophies,
+.ticker-feed {
+  scrollbar-width: thin;
+  scrollbar-color: var(--gold) transparent;
+}
+.roadmap-trophies::-webkit-scrollbar,
+.ticker-feed::-webkit-scrollbar {
+  height: 5px;
+  width: 5px;
+}
+.roadmap-trophies::-webkit-scrollbar-thumb,
+.ticker-feed::-webkit-scrollbar-thumb {
+  background: rgba(231, 198, 107, 0.45);
+  border-radius: 4px;
+}
+.roadmap-trophies::-webkit-scrollbar-track,
+.ticker-feed::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Fresh highlight items get a soft entrance instead of popping in flatly. */
+.hl-item {
+  animation: hlIn 0.3s ease both;
+}
+@keyframes hlIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* A touch of shimmer on the hero title, since it's the very first thing
+   anyone sees. */
+.title span {
+  background: linear-gradient(100deg, var(--gold) 20%, var(--gold-2) 40%, #fff6dc 50%, var(--gold-2) 60%, var(--gold) 80%);
+  background-size: 220% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: titleShimmer 6s linear infinite;
+}
+@keyframes titleShimmer {
+  to { background-position: -220% center; }
 }
