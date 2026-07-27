@@ -870,7 +870,7 @@ function renderCrewStripHTML() {
         return `
           <div class="crew-slot ${m ? "filled" : "empty"}">
             <div class="slot-top">
-              <span class="slot-role">${role}</span>
+              <span class="slot-role" title="${role}">${role}</span>
               ${m ? (hide ? `<span class="slot-rating hidden-rating">🔒</span>` : `<span class="slot-rating rt-${ratingTier(m.rating)}">${m.rating}</span>`) : ""}
             </div>
             <span class="slot-name">${m ? m.name : "—"}</span>
@@ -1519,19 +1519,23 @@ async function runFestival(fest) {
 function scoreRecapHTML(team, fest, easyMode) {
   const rows = componentContributions(team, fest, easyMode);
   const maxPts = Math.max(0.001, ...rows.map((r) => r.points));
+  const total = Math.max(0.001, rows.reduce((a, r) => a + r.points, 0));
   return `
     <div class="score-recap">
       <h3>What mattered at ${fest.name}</h3>
-      <p class="muted small">How your crew's score broke down tonight — ${fest.name} weighs these components.</p>
+      <p class="muted small">
+        How your <b class="hl">${fmt(total)}-pt</b> baseline score broke down tonight — ${fest.name} weighs these components
+        (live events during the screening can still swing the final score up or down).
+      </p>
       <div class="recap-rows">
         ${rows
           .map(
             (r) => `
-          <div class="recap-row">
-            <span class="recap-ic">${r.icon}</span>
-            <span class="recap-label">${r.label}</span>
-            <div class="recap-bar-track"><div class="recap-bar-fill" style="width:${(r.points / maxPts) * 100}%"></div></div>
-            <span class="recap-pts">${r.points.toFixed(1)}</span>
+          <div class="comp-row">
+            <span class="comp-ic">${r.icon}</span>
+            <span class="comp-label">${r.label}</span>
+            <div class="comp-bar-track"><div class="comp-bar-fill" style="width:${(r.points / maxPts) * 100}%"></div></div>
+            <span class="comp-pts">${r.points.toFixed(1)} <span class="comp-pct">${Math.round((r.points / total) * 100)}%</span></span>
           </div>`
           )
           .join("")}
