@@ -118,6 +118,8 @@ function freshVsState() {
     seasonUsedRivalIds: new Set(),
     turnPlayer: 1,
     currentRoster: null,
+    transferPlayer: 1,
+    transfersLeft: 0,
     season: 1,
     festivalIndex: 0,
     p1: mkPlayer("Player 1", "P1"),
@@ -247,7 +249,7 @@ function vsCrewStripHTML(p, label) {
           return `
             <div class="crew-slot ${m ? "filled" : "empty"}">
               <div class="slot-top">
-                <span class="slot-role">${role}</span>
+                <span class="slot-role" title="${role}">${role}</span>
                 ${m ? `<span class="slot-rating rt-${ratingTier(m.rating)}">${m.rating}</span>` : ""}
               </div>
               <span class="slot-name">${m ? m.name : "—"}</span>
@@ -753,18 +755,20 @@ async function vsRunFestival(fest, onExit) {
 function vsScoreRecapHTML(team, fest, label) {
   const rows = componentContributions(team, fest, false);
   const maxPts = Math.max(0.001, ...rows.map((r) => r.points));
+  const total = Math.max(0.001, rows.reduce((a, r) => a + r.points, 0));
   return `
     <div class="score-recap">
       <h3>${label} — what mattered at ${fest.name}</h3>
+      <p class="muted small">Baseline score: <b class="hl">${fmt(total)}</b> pts (before live events).</p>
       <div class="recap-rows">
         ${rows
           .map(
             (r) => `
-          <div class="recap-row">
-            <span class="recap-ic">${r.icon}</span>
-            <span class="recap-label">${r.label}</span>
-            <div class="recap-bar-track"><div class="recap-bar-fill" style="width:${(r.points / maxPts) * 100}%"></div></div>
-            <span class="recap-pts">${r.points.toFixed(1)}</span>
+          <div class="comp-row">
+            <span class="comp-ic">${r.icon}</span>
+            <span class="comp-label">${r.label}</span>
+            <div class="comp-bar-track"><div class="comp-bar-fill" style="width:${(r.points / maxPts) * 100}%"></div></div>
+            <span class="comp-pts">${r.points.toFixed(1)} <span class="comp-pct">${Math.round((r.points / total) * 100)}%</span></span>
           </div>`
           )
           .join("")}
@@ -825,12 +829,236 @@ function vsAdvance(onExit) {
   }
   // Season done.
   if (vs.season < TOTAL_SEASONS) {
+    renderVsSeasonEnd(onExit);
+  } else {
+    renderVsFinalResult(onExit);
+  }
+}
+
+// ── SCREEN: season end + transfer window (3 draws each, same rules as the
+// single-player campaign) ────────────────────────────────────────────────
+function renderVsSeasonEnd(onExit) {
+  root().innerHTML = "";
+  const seasonResultsFor = (p) => p.results.filter((r) => r.season === vs.season);
+  const playerRecapHTML = (p, flag) => `
+    <div class="vs-crew-col">
+      <h4 class="vs-crew-col-title">${flag} ${p.name}</h4>
+      <div class="season-recap">
+        ${seasonResultsFor(p)
+          .map((r) => {
+            const f = FEST_BY_KEY[r.festKey];
+            return `
+            <div class="recap-row ${r.rank === 1 ? "won" : "lost"}">
+              <span class="recap-icon">${f.icon}</span>
+              <span class="recap-fest">${f.name}</span>
+              <span class="recap-rank">${r.rank === 1 ? "🏆 Conquered" : `#${r.rank}`}</span>
+              <span class="recap-score">${fmt(r.score)}</span>
+            </div>`;
+          })
+          .join("")}
+      </div>
+    </div>`;
+  const view = el(`
+    <section class="screen season-end vs-screen">
+      ${vsHeader(`Season ${vs.season} complete`)}
+      <div class="intro-glow"></div>
+      <h1 class="title">Season ${vs.season} wrap-up</h1>
+      <h3 class="recap-title">This season's festivals</h3>
+      <div class="vs-split">
+        ${playerRecapHTML(vs.p1, "🅰️")}
+        ${playerRecapHTML(vs.p2, "🅱️")}
+      </div>
+      <div class="transfer-pitch">
+        <p>🎟️ Each player receives <b>3 transfer draws</b> for Season ${vs.season + 1}. Use them to
+           replace up to three crew members — or keep your crew as is.</p>
+        <div class="season-actions">
+          <button class="btn btn-primary btn-lg" id="openTransfer">Open transfer windows</button>
+          <button class="btn btn-ghost btn-lg" id="skipTransfer">Keep crews &amp; continue ▸</button>
+        </div>
+      </div>
+    </section>
+  `);
+  view.querySelector("#openTransfer").addEventListener("click", () => {
+    vs.season += 1;
+    vs.festivalIndex = 0;
+    vs.seasonUsedRivalIds = new Set();
+    vsStartTransfer(1, onExit);
+  });
+  view.querySelector("#skipTransfer").addEventListener("click", () => {
     vs.season += 1;
     vs.festivalIndex = 0;
     vs.seasonUsedRivalIds = new Set();
     vsEnterFestival(onExit);
+  });
+  wireVsHome(view, onExit);
+  root().appendChild(view);
+}
+
+function vsStartTransfer(playerNum, onExit) {
+  vs.transferPlayer = playerNum;
+  vs.transfersLeft = 3;
+  vs.currentRoster = null;
+  renderVsTransfer(onExit);
+}
+
+function vsCanFillTransfer(roster) {
+  return roster.members.some((m) => !vs.usedNames.has(m.name));
+}
+
+function drawUniqueRosterForTransfer() {
+  let pool = ROSTERS.filter((r) => !vs.usedRosterIds.has(r.id));
+  if (!pool.length) {
+    vs.usedRosterIds.clear();
+    pool = ROSTERS.slice();
+  }
+  let candidates = pool.filter(vsCanFillTransfer);
+  if (!candidates.length) candidates = ROSTERS.filter(vsCanFillTransfer);
+  if (!candidates.length) return null;
+  const chosen = pick(candidates);
+  vs.usedRosterIds.add(chosen.id);
+  return chosen;
+}
+
+function renderVsTransfer(onExit) {
+  root().innerHTML = "";
+  const p = vs.transferPlayer === 1 ? vs.p1 : vs.p2;
+  const flag = vs.transferPlayer === 1 ? "🅰️" : "🅱️";
+  const view = el(`
+    <section class="screen draft vs-screen">
+      ${vsHeader("1vs1 Local · Transfer window")}
+      <header class="draft-head">
+        <div>
+          <p class="kicker vs-turn-banner">🎟️ ${flag} ${p.name}'s transfer window</p>
+          <h2>Replace up to 3 crew members before Season ${vs.season} begins.</h2>
+        </div>
+        <div class="draft-stats">
+          <div class="draft-stat">
+            <span class="big">${vs.transfersLeft}</span>
+            <span class="muted">draws left</span>
+          </div>
+          <div class="draft-stat">
+            <span class="big rt-${ratingTier(vsCrewAverage(p))}">${vsCrewAverage(p).toFixed(1)}</span>
+            <span class="muted">crew avg rating</span>
+          </div>
+        </div>
+      </header>
+
+      <div class="draft-stage">
+        <div class="reel-wrap" id="reelWrap">
+          <p class="reel-caption" id="reelCaption">You have <b>${vs.transfersLeft}</b> draw${vs.transfersLeft === 1 ? "" : "s"} left.</p>
+          <div class="draft-actions">
+            <button class="btn btn-primary btn-lg" id="drawBtn" ${vs.transfersLeft <= 0 ? "disabled" : ""}>🎰 Draw Team</button>
+            <button class="btn btn-ghost" id="doneTransfer">Done — ${
+              vs.transferPlayer === 1 ? `${vs.p2.name}'s turn ▸` : `Start Season ${vs.season} ▸`
+            }</button>
+          </div>
+        </div>
+        <aside class="roster-pane" id="rosterPane"></aside>
+      </div>
+
+      ${vsCrewStripHTML(p, `${flag} ${p.name}`)}
+    </section>
+  `);
+  view.querySelector("#drawBtn").addEventListener("click", () => vsDrawTransfer(p, view, onExit));
+  view.querySelector("#doneTransfer").addEventListener("click", () => vsFinishTransferTurn(onExit));
+  wireVsHome(view, onExit);
+  root().appendChild(view);
+  if (vs.currentRoster) renderVsTransferRosterPane(vs.currentRoster, p, onExit);
+}
+
+async function vsDrawTransfer(p, view, onExit) {
+  if (vs.transfersLeft <= 0) return;
+  vs.transfersLeft -= 1;
+  const btn = view.querySelector("#drawBtn");
+  if (btn) btn.disabled = true;
+  const cap = view.querySelector("#reelCaption");
+  if (cap) cap.textContent = "🎰 Drawing…";
+  const wrap = view.querySelector("#reelWrap");
+  if (wrap) wrap.classList.add("spinning");
+  await sleep(650);
+  if (wrap) wrap.classList.remove("spinning");
+
+  const chosen = drawUniqueRosterForTransfer();
+  vs.currentRoster = chosen;
+  if (cap) {
+    cap.innerHTML = chosen
+      ? `Drew: ${chosen.flag} ${chosen.name} — you have <b>${vs.transfersLeft}</b> draw${vs.transfersLeft === 1 ? "" : "s"} left.`
+      : "No roster left to draw.";
+  }
+  if (btn) btn.disabled = vs.transfersLeft <= 0;
+  if (!chosen) {
+    flashToast("No usable roster left.");
+    return;
+  }
+  renderVsTransferRosterPane(chosen, p, onExit);
+}
+
+function renderVsTransferRosterPane(roster, p, onExit) {
+  const pane = $("#rosterPane");
+  if (!pane) return;
+  pane.innerHTML = `
+    <div class="roster-card" style="--accent:#e7c66b">
+      <div class="roster-card-head">
+        <span class="roster-flag">${roster.flag}</span>
+        <div>
+          <h3>${roster.name}</h3>
+          <p class="muted">${roster.missing.length ? `Missing: ${roster.missing.join(", ")}` : "Complete roster"}</p>
+        </div>
+      </div>
+      <ul class="member-list">
+        ${roster.members
+          .map((m) => {
+            const pickable = !vs.usedNames.has(m.name);
+            return `
+            <li class="member ${pickable ? "pickable" : "locked"}" data-name="${encodeURIComponent(m.name)}">
+              <div class="m-main">
+                <span class="m-role">${m.role}</span>
+                <span class="m-name">${m.name}</span>
+                ${m.bonuses.length ? `<span class="m-bonuses">${bonusChipsHTML(m.bonuses)}</span>` : ""}
+              </div>
+              <span class="m-rating rt-${ratingTier(m.rating)}" title="Rating">${m.rating}</span>
+              <span class="m-status">${pickable ? "Swap in" : "Already drafted"}</span>
+            </li>`;
+          })
+          .join("")}
+      </ul>
+      <div class="roster-foot">
+        <span class="muted small">Pick one member to swap into your crew, or:</span>
+        <button class="btn btn-ghost" id="skipDraw">Discard this draw ▸</button>
+      </div>
+    </div>
+  `;
+  pane.querySelectorAll(".member.pickable").forEach((li) => {
+    li.addEventListener("click", () => {
+      const name = decodeURIComponent(li.dataset.name);
+      const member = roster.members.find((m) => m.name === name);
+      if (member) vsSwapMember(member, roster, p, onExit);
+    });
+  });
+  const skip = pane.querySelector("#skipDraw");
+  if (skip)
+    skip.addEventListener("click", () => {
+      vs.currentRoster = null;
+      flashToast("Draw discarded — no swap made.");
+      renderVsTransfer(onExit);
+    });
+}
+
+function vsSwapMember(member, roster, p, onExit) {
+  const previous = p.crew[member.role];
+  if (previous) vs.usedNames.delete(previous.name);
+  p.crew[member.role] = { ...member, from: roster.name };
+  vs.usedNames.add(member.name);
+  vs.currentRoster = null;
+  flashToast(`✅ ${member.name} joins ${p.name}'s crew as ${member.role}`);
+  renderVsTransfer(onExit);
+}
+
+function vsFinishTransferTurn(onExit) {
+  if (vs.transferPlayer === 1) {
+    vsStartTransfer(2, onExit);
   } else {
-    renderVsFinalResult(onExit);
+    vsEnterFestival(onExit);
   }
 }
 
